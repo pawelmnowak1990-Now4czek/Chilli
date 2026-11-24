@@ -1,0 +1,9 @@
+# gitleaks configuration: the default rules, plus an allowlist for the test suite, whose made-up
+# tokens and keys ("sk-ant-test", sentinel values, generated hex in temp folders) look like secrets on
+# purpose. Real secrets belong only in .env, which is never committed.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "test values"
+paths = ['''^tests/''']

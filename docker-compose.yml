@@ -1,0 +1,36 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chilli
+      POSTGRES_USER: chilli
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?ustaw POSTGRES_PASSWORD w .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chilli -d chilli"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Port bazy nie jest wystawiony na zewnątrz: łączy się z nią tylko serwis api.
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://chilli:${POSTGRES_PASSWORD}@db:5432/chilli
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - images:/data/images
+    ports:
+      # Localhost only; traffic from the internet comes in through the web server with HTTPS.
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  db_data:
+  images:

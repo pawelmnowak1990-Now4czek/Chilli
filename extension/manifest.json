@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "Chilli",
+  "version": "0.3.0",
+  "description": "Saves the page, selected text or a tab screenshot to your Chilli knowledge base in one click, and shows what you have already saved about it.",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Save to Chilli (selection or page)",
+    "default_icon": {
+      "16": "icons/chilli-16.png",
+      "32": "icons/chilli-32.png",
+      "48": "icons/chilli-48.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "save-screenshot": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Save tab screenshot to Chilli"
+    },
+    "show-related": {
+      "suggested_key": {
+        "default": "Alt+Shift+R"
+      },
+      "description": "Show related saves from Chilli"
+    }
+  },
+  "icons": {
+    "16": "icons/chilli-16.png",
+    "48": "icons/chilli-48.png",
+    "128": "icons/chilli-128.png"
+  }
+}

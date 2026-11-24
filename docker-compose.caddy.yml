@@ -1,0 +1,33 @@
+# Optional web server with automatic HTTPS (Let's Encrypt), for a server that has nothing else on
+# ports 80 and 443. Not used unless asked for:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d --build
+#
+# setup.sh with the "caddy" choice runs exactly that and also writes
+# COMPOSE_FILE=docker-compose.yml:docker-compose.caddy.yml into .env, so a later plain
+# `docker compose up -d --build` keeps Caddy. Without that line (e.g. a server that already has
+# nginx in front, see deploy/nginx/) only db and api start, and nothing binds 80/443.
+#
+# This file only adds a service; docker-compose.yml stays as it is.
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    environment:
+      CHILLI_DOMAIN: ${CHILLI_DOMAIN:?set CHILLI_DOMAIN in .env, e.g. chilli.example.com}
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and Caddy's state survive container restarts and rebuilds.
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+psycopg[binary]    # Postgres driver
+python-multipart   # FastAPI needs it to read forms with a file (screenshot)
+anthropic         # Claude API client (provider anthropic, app/llm/)
+openai            # client for OpenAI-compatible APIs (OpenAI, OpenRouter, Gemini, Ollama, LM Studio, vLLM)
+pillow            # downscaling images
+fastembed         # local embeddings (ONNX, no PyTorch)
+httpx             # fetching pages behind links
+trafilatura       # extracting article text from HTML
+mcp               # MCP server (Streamable HTTP) for AI clients
+feedparser        # RSS/Atom feeds (subscriptions, app/feeds.py)

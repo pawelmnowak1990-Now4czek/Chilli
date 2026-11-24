@@ -1,0 +1,56 @@
+# nginx site for Chilli (template). Render it with your domain, copy it to the server as
+# /etc/nginx/sites-available/chilli and enable it with a symlink in sites-enabled:
+#
+#   CHILLI_DOMAIN=chilli.example.com envsubst '${CHILLI_DOMAIN}' < deploy/nginx/chilli.conf.template > chilli.conf
+#
+# The '${CHILLI_DOMAIN}' argument matters: without it envsubst would also blank out nginx
+# variables such as $host and $remote_addr.
+#
+# The file deliberately has port 80 only. The HTTPS part (listen 443, certificate paths,
+# redirect from http) is added by `certbot --nginx` itself. If certificate paths were here
+# before the certificate exists, `nginx -t` would fail and block reloading for the other
+# sites on the server as well.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${CHILLI_DOMAIN};
+
+    # By default nginx rejects a body larger than 1 MB, and an iPhone screenshot is 2-6 MB.
+    # The service enforces its own limit (MAX_UPLOAD_MB in .env); this is just headroom.
+    client_max_body_size 25m;
+
+    # Shared headers: the service sees the real client address and that traffic came over HTTPS.
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # The MCP server may carry its secret in the path (/mcp/<MCP_SECRET>), so nothing from this
+    # path may reach the logs. `location /mcp` matches everything starting with /mcp.
+    location /mcp {
+        access_log off;
+        # Errors like "upstream not responding" are logged by nginx together with the full
+        # request line, i.e. with the secret. Level crit cuts them out for this path.
+        error_log /dev/null crit;
+
+        proxy_pass http://127.0.0.1:8000;
+
+        # MCP keeps long connections with a streamed response: no buffering and a longer
+        # timeout, so nginx does not cut the conversation after 60 s.
+        proxy_http_version 1.1;
+        # Note: if a location has even one proxy_set_header of its own, nginx does NOT inherit
+        # the ones from the server level. That is why all headers are repeated here.
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection        "";
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+    }
+}

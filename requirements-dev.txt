@@ -1,0 +1,5 @@
+# Tools for running the tests on a computer only; they do not go into the Docker image.
+pytest
+httpx       # HTTP client used by FastAPI's TestClient
+pgserver    # temporary Postgres 16 with pgvector installed in .venv, no Docker needed
+pyyaml      # reading the compose files in tests/test_compose.py

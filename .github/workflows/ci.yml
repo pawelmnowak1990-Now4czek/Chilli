@@ -1,0 +1,50 @@
+# Tests and a secret scan on every push and pull request.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  # gitleaks-action lists the commits of a pull request through the API.
+  pull-requests: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      # The embedding model (about 120 MB) is downloaded by the tests into .cache/models;
+      # caching it keeps runs fast and independent of Hugging Face being reachable.
+      - uses: actions/cache@v4
+        with:
+          path: .cache/models
+          key: embedding-model-${{ hashFiles('app/embeddings.py') }}
+
+      - name: Install
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      # pgserver starts a temporary Postgres 16 with pgvector, so no database service is needed.
+      - name: Test
+        run: pytest -q
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # gitleaks scans the whole history
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

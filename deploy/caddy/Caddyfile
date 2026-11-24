@@ -1,0 +1,17 @@
+# Caddy site for Chilli (docker-compose.caddy.yml). Caddy gets and renews the HTTPS certificate
+# for CHILLI_DOMAIN by itself; the domain's DNS A record must point at this server first.
+#
+# No access log: Caddy writes none unless a `log` directive is present, so request paths
+# (including an old /mcp/<secret> address) never reach a log file. Do not add `log` here.
+
+{$CHILLI_DOMAIN} {
+	# An iPhone screenshot is 2-6 MB; the service enforces its own limit (MAX_UPLOAD_MB), this is headroom.
+	request_body {
+		max_size 25MB
+	}
+
+	reverse_proxy api:8000 {
+		# MCP streams its responses: pass every chunk on right away instead of buffering.
+		flush_interval -1
+	}
+}

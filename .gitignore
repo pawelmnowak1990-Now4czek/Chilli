@@ -1,0 +1,15 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.DS_Store
+data/
+.cache/
+# Backups of .env made by setup.sh --force or by hand: they hold secrets.
+.env.bak-*
+# nginx site rendered from deploy/nginx/chilli.conf.template by setup.sh.
+/chilli.conf
+
+# Private working notes of one installation, never published.
+docs/handoffs/
