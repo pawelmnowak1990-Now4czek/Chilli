@@ -106,6 +106,27 @@ One line per check (settings, database, pgvector, schema, embedding model, one t
 `OK`, `WARN` or `FAIL`, and exit code 1 if anything failed. Secret values are never printed.
 `--no-llm` skips the model call. Quick health check from outside: `curl https://chilli.example.com/health`.
 
+## Try it with demo data
+
+A fresh instance is empty. To see search, ratings per project, "from the archive" and reminders
+before saving anything yourself, add 15 made-up demo saves and 3 demo projects:
+
+```bash
+docker compose exec api python -m app.demo_seed            # preview
+docker compose exec api python -m app.demo_seed --apply    # insert
+```
+
+Then ask your AI client, for example: "Search Chilli for keeping plants alive on holiday",
+"What are my top saves for the indie app launch?" or "Anything from the archive?".
+No model API is called; the local embedding model computes the vectors.
+
+It refuses to run when you already have real saves (add `--force` to insert anyway). Remove the demo
+data before you start using Chilli for real; this deletes only rows marked as demo:
+
+```bash
+docker compose exec api python -m app.demo_seed --remove --apply
+```
+
 ## Update
 
 ```bash
