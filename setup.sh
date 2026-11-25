@@ -10,7 +10,8 @@
 #        reads the answers from environment variables instead of asking:
 #        CHILLI_WEBSERVER (caddy | nginx | none), CHILLI_DOMAIN (e.g. chilli.example.com),
 #        LLM_PROVIDER (anthropic | openai), LLM_MODEL, LLM_API_KEY, LLM_BASE_URL,
-#        CONTENT_LANGUAGE (default en), OWNER_NAME (optional).
+#        CONTENT_LANGUAGE (default en), OWNER_NAME (optional),
+#        CHILLI_PORT (nginx and none only; host port of the api, default 8000).
 #
 # Nothing here needs root. Secrets are printed once, to this terminal, at the end; they are not
 # written anywhere except .env (mode 600).
@@ -143,6 +144,20 @@ esac
 PUBLIC_URL=""
 [ -n "$CHILLI_DOMAIN" ] && PUBLIC_URL="https://$CHILLI_DOMAIN"
 
+# Host port of the api (127.0.0.1 only). Matters for nginx and local use; a second Chilli on the same
+# server needs its own. Caddy reaches the api inside the compose network, so it is not asked there.
+if [ "$CHILLI_WEBSERVER" = "caddy" ]; then
+    CHILLI_PORT=8000
+else
+    ask CHILLI_PORT "Local port for the api (another Chilli on this server needs a different one)" "8000"
+    case "$CHILLI_PORT" in
+        ''|*[!0-9]*) fail "CHILLI_PORT must be a number between 1024 and 65535" ;;
+    esac
+    if [ "$CHILLI_PORT" -lt 1024 ] || [ "$CHILLI_PORT" -gt 65535 ]; then
+        fail "CHILLI_PORT must be a number between 1024 and 65535"
+    fi
+fi
+
 ask LLM_PROVIDER "Model provider: anthropic (Claude) or openai (OpenAI, OpenRouter, Gemini, Ollama, LM Studio...)" "anthropic"
 LLM_PROVIDER="$(lower "$LLM_PROVIDER")"
 case "$LLM_PROVIDER" in
@@ -196,6 +211,10 @@ TMP_ENV="$ENV_FILE.tmp.$$"
     echo "LLM_BASE_URL=$LLM_BASE_URL"
     echo "CONTENT_LANGUAGE=$CONTENT_LANGUAGE"
     echo "OWNER_NAME=$OWNER_NAME"
+    # Only when it differs from the default, so a plain install keeps the default compose setup.
+    if [ "$CHILLI_PORT" != "8000" ]; then
+        echo "CHILLI_PORT=$CHILLI_PORT"
+    fi
     if [ "$CHILLI_WEBSERVER" = "caddy" ]; then
         echo "# Caddy (docker-compose.caddy.yml): a plain \`docker compose up -d\` includes it."
         echo "CHILLI_DOMAIN=$CHILLI_DOMAIN"
@@ -211,12 +230,16 @@ echo "Wrote $ENV_FILE (readable only by you)."
 if [ "$CHILLI_WEBSERVER" = "nginx" ]; then
     TEMPLATE="$DIR/deploy/nginx/chilli.conf.template"
     if [ -e "$TEMPLATE" ]; then
-        # The domain is checked above (letters, digits, dots, hyphens), so sed needs no escaping.
-        sed "s/\${CHILLI_DOMAIN}/$CHILLI_DOMAIN/g" "$TEMPLATE" > "$DIR/chilli.conf"
+        # The domain (letters, digits, dots, hyphens) and the port (digits) are checked above, so sed
+        # needs no escaping. sed instead of envsubst: it is always there, and it leaves nginx's own
+        # $host and friends alone because it replaces only these two names.
+        sed -e "s/\${CHILLI_DOMAIN}/$CHILLI_DOMAIN/g" -e "s/\${CHILLI_PORT}/$CHILLI_PORT/g" "$TEMPLATE" > "$DIR/chilli.conf"
+        # The site file is named after the domain, so a second Chilli on this server gets its own.
+        SITE="/etc/nginx/sites-available/$CHILLI_DOMAIN"
         echo
         echo "nginx site written to $DIR/chilli.conf. To enable it (as root):"
-        echo "  sudo cp $DIR/chilli.conf /etc/nginx/sites-available/chilli"
-        echo "  sudo ln -s /etc/nginx/sites-available/chilli /etc/nginx/sites-enabled/chilli"
+        echo "  sudo cp $DIR/chilli.conf $SITE"
+        echo "  sudo ln -s $SITE /etc/nginx/sites-enabled/$CHILLI_DOMAIN"
         echo "  sudo nginx -t && sudo systemctl reload nginx"
         echo "  sudo certbot --nginx -d $CHILLI_DOMAIN"
     else
@@ -251,7 +274,7 @@ fi
 
 # --- what next -------------------------------------------------------------------------------
 
-BASE="${PUBLIC_URL:-http://localhost:8000}"
+BASE="${PUBLIC_URL:-http://localhost:$CHILLI_PORT}"
 echo
 echo "Done. Keep these values; they are shown only now (and stored in .env):"
 echo

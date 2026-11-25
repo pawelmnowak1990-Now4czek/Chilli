@@ -24,6 +24,7 @@ ANSWERS = {
     "LLM_BASE_URL": "",
     "CONTENT_LANGUAGE": "pl",
     "OWNER_NAME": "Ana",
+    "CHILLI_PORT": "",
 }
 
 
@@ -190,3 +191,54 @@ def test_this_checkout_is_left_alone(tmp_path: Path, stub_bin: Path) -> None:
     after = repo_env.stat().st_mtime_ns if repo_env.exists() else None
     assert before == after
     assert os.access(SCRIPT, os.X_OK)
+
+
+def copy_nginx_template(target: Path) -> None:
+    (target / "deploy" / "nginx").mkdir(parents=True)
+    (target / "deploy" / "nginx" / "chilli.conf.template").write_text(
+        (REPO / "deploy" / "nginx" / "chilli.conf.template").read_text()
+    )
+
+
+def test_nginx_choice_with_another_port(tmp_path: Path, stub_bin: Path) -> None:
+    """A second instance on the same server: its own port in .env and in the nginx site."""
+    copy_nginx_template(tmp_path)
+    result = run(tmp_path, stub_bin, "--no-start", CHILLI_WEBSERVER="nginx", CHILLI_PORT="8001")
+    assert result.returncode == 0, result.stderr
+    assert env_lines(tmp_path / ".env")["CHILLI_PORT"] == "8001"
+    site = (tmp_path / "chilli.conf").read_text()
+    assert site.count("proxy_pass http://127.0.0.1:8001;") == 2
+    directives = [line for line in site.splitlines() if not line.lstrip().startswith("#")]
+    assert not any("8000" in line for line in directives)
+    assert "proxy_set_header Host              $host;" in site  # nginx variables untouched
+    # The site file is named after the domain, so two instances do not overwrite each other.
+    assert "/etc/nginx/sites-available/chilli.example.com" in result.stdout
+
+
+def test_default_port_is_not_written_to_env(tmp_path: Path, stub_bin: Path) -> None:
+    copy_nginx_template(tmp_path)
+    result = run(tmp_path, stub_bin, "--no-start", CHILLI_WEBSERVER="nginx")
+    assert result.returncode == 0, result.stderr
+    assert "CHILLI_PORT" not in env_lines(tmp_path / ".env")
+    assert "proxy_pass http://127.0.0.1:8000;" in (tmp_path / "chilli.conf").read_text()
+
+
+def test_local_only_uses_the_port(tmp_path: Path, stub_bin: Path) -> None:
+    result = run(tmp_path, stub_bin, "--no-start", CHILLI_WEBSERVER="none", CHILLI_DOMAIN="", CHILLI_PORT="8002")
+    assert result.returncode == 0, result.stderr
+    assert env_lines(tmp_path / ".env")["CHILLI_PORT"] == "8002"
+    assert "http://localhost:8002/capture" in result.stdout
+
+
+@pytest.mark.parametrize("bad", ["80", "70000", "abc", "8001x"])
+def test_invalid_port_is_refused(tmp_path: Path, stub_bin: Path, bad: str) -> None:
+    result = run(tmp_path, stub_bin, "--no-start", CHILLI_WEBSERVER="none", CHILLI_DOMAIN="", CHILLI_PORT=bad)
+    assert result.returncode != 0 and "CHILLI_PORT" in result.stderr
+    assert not (tmp_path / ".env").exists()
+
+
+def test_caddy_ignores_the_port(tmp_path: Path, stub_bin: Path) -> None:
+    """Caddy talks to api:8000 inside the compose network; the host port is not asked for."""
+    result = run(tmp_path, stub_bin, "--no-start", CHILLI_PORT="8001")
+    assert result.returncode == 0, result.stderr
+    assert "CHILLI_PORT" not in env_lines(tmp_path / ".env")

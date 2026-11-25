@@ -67,7 +67,8 @@ setup.sh writes `COMPOSE_FILE=docker-compose.yml:docker-compose.caddy.yml` and `
 `.env`, so later `docker compose` commands include Caddy automatically.
 
 Caddy writes no access log (`deploy/caddy/Caddyfile` has no `log` directive), so request paths never
-end up in a log file.
+end up in a log file. Only one Caddy can hold ports 80 and 443 on a server, so for a second Chilli on
+the same server use the nginx choice (see "Running two instances on one server" below).
 
 ### Web server: existing nginx
 
@@ -76,25 +77,42 @@ If nginx already serves other sites on this server, choose `nginx`. setup.sh ren
 none of them. As root:
 
 ```bash
-cp chilli.conf /etc/nginx/sites-available/chilli
-ln -s /etc/nginx/sites-available/chilli /etc/nginx/sites-enabled/chilli
+cp chilli.conf /etc/nginx/sites-available/chilli.example.com
+ln -s /etc/nginx/sites-available/chilli.example.com /etc/nginx/sites-enabled/chilli.example.com
 nginx -t && systemctl reload nginx
 certbot --nginx -d chilli.example.com
 ```
+
+The site file is named after the domain, so a second Chilli on the same server gets its own.
 
 The site raises `client_max_body_size` to 25 MB (screenshots are 2-6 MB) and turns the access log off
 for `/mcp`. The file has port 80 only; `certbot --nginx` adds the HTTPS part. To render it by hand:
 
 ```bash
-CHILLI_DOMAIN=chilli.example.com envsubst '${CHILLI_DOMAIN}' < deploy/nginx/chilli.conf.template > chilli.conf
+CHILLI_DOMAIN=chilli.example.com CHILLI_PORT=8000 envsubst '${CHILLI_DOMAIN} ${CHILLI_PORT}' < deploy/nginx/chilli.conf.template > chilli.conf
 ```
 
-The quoted `'${CHILLI_DOMAIN}'` matters: without it envsubst would also blank nginx's own `$host` variables.
+The quoted variable list matters: without it envsubst would also blank nginx's own `$host` variables.
+`CHILLI_PORT` is the api's local port (default 8000).
 
 ### Web server: none (local only)
 
-Chilli listens on `http://127.0.0.1:8000` only. Useful for trying it out, or behind your own reverse
+Chilli listens on `http://127.0.0.1:8000` only (or the `CHILLI_PORT` you chose). Useful for trying it out, or behind your own reverse
 proxy. The MCP server then accepts local requests only, unless you set `PUBLIC_URL`.
+
+### Running two instances on one server
+
+For example a demo instance next to your own. Each one needs:
+
+- **its own folder**: clone the repository again into another directory and run `./setup.sh` there.
+  Docker Compose names the containers and volumes after the folder, so the databases stay separate.
+- **its own port**: answer the port question with something free, e.g. `8001` (setup.sh writes
+  `CHILLI_PORT=8001` into that instance's `.env`; the first one keeps the default 8000).
+- **its own domain, nginx site and certificate**: e.g. `demo.example.com` with its own A record; setup.sh
+  writes a site for that domain pointing at `127.0.0.1:8001`, and `certbot --nginx -d demo.example.com`
+  adds its certificate.
+
+Use the nginx choice for both (or for the second one): two Caddy containers cannot share ports 80 and 443.
 
 ## Check the installation
 

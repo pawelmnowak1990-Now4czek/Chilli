@@ -29,7 +29,8 @@ services:
       - images:/data/images
     ports:
       # Localhost only; traffic from the internet comes in through the web server with HTTPS.
-      - "127.0.0.1:8000:8000"
+      # CHILLI_PORT (default 8000) lets a second Chilli run on the same server.
+      - "127.0.0.1:${CHILLI_PORT:-8000}:8000"
 
 volumes:
   db_data:

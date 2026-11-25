@@ -15,6 +15,7 @@ put it in `.env`, run `docker compose up -d` and update the Shortcuts, the exten
 | `CAPTURE_TOKEN` | empty | **Secret.** Token the Shortcuts and the extension send as `Authorization: Bearer <token>`. Empty = `/capture` refuses everything. |
 | `MCP_SECRET` | empty | **Secret.** Token AI clients send to `/mcp` as `Authorization: Bearer <secret>`. Empty = no MCP server. |
 | `MCP_SECRET_IN_URL` | `true` | Whether the older address `/mcp/<secret>` also works. setup.sh sets `false`; keep it `false` unless a client cannot send headers. |
+| `CHILLI_PORT` | `8000` | Local port the api listens on (`127.0.0.1` only), used by docker compose and the nginx site. Change it only to run a second Chilli on the same server. Caddy does not use it. |
 | `ENV` | `dev` | Free label shown by `/health`; setup.sh writes `production`. |
 
 ## Language

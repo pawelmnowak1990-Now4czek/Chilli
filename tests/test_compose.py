@@ -23,7 +23,8 @@ def test_main_file_has_only_db_and_api() -> None:
     main = load("docker-compose.yml")
     assert set(main["services"]) == {"db", "api"}
     # Nothing in the main file binds the public ports 80/443; api listens on localhost only.
-    assert main["services"]["api"]["ports"] == ["127.0.0.1:8000:8000"]
+    # The host port defaults to 8000; CHILLI_PORT lets a second Chilli run on the same server.
+    assert main["services"]["api"]["ports"] == ["127.0.0.1:${CHILLI_PORT:-8000}:8000"]
     assert "ports" not in main["services"]["db"]
 
 
@@ -39,7 +40,11 @@ def test_db_service_and_volumes_are_unchanged_from_main_branch() -> None:
     assert here["services"]["db"] == on_main["services"]["db"]
     assert here["volumes"] == on_main["volumes"]
     assert set(here["services"]) == set(on_main["services"])
-    assert here["services"]["api"] == on_main["services"]["api"]  # only comments may differ
+    # The api service may differ only in its host port (CHILLI_PORT, default 8000 = as before).
+    api_here = {k: v for k, v in here["services"]["api"].items() if k != "ports"}
+    api_main = {k: v for k, v in on_main["services"]["api"].items() if k != "ports"}
+    assert api_here == api_main
+    assert here["services"]["api"]["ports"] in (on_main["services"]["api"]["ports"], ["127.0.0.1:${CHILLI_PORT:-8000}:8000"])
 
 
 def test_caddy_override_adds_only_caddy() -> None:
@@ -71,3 +76,17 @@ def test_docker_compose_config_services() -> None:
         cwd=REPO, capture_output=True, text=True, env={"POSTGRES_PASSWORD": "x", "CHILLI_DOMAIN": "chilli.example.com", "PATH": "/usr/local/bin:/usr/bin:/bin"},
     )
     assert sorted(both.stdout.split()) == ["api", "caddy", "db"]
+
+
+@pytest.mark.skipif(shutil.which("envsubst") is None, reason="envsubst not installed here")
+def test_nginx_template_renders_domain_and_port_only() -> None:
+    template = (REPO / "deploy" / "nginx" / "chilli.conf.template").read_text()
+    rendered = subprocess.run(
+        ["envsubst", "${CHILLI_DOMAIN} ${CHILLI_PORT}"], input=template, capture_output=True, text=True,
+        env={"CHILLI_DOMAIN": "chilli.example.com", "CHILLI_PORT": "8001", "PATH": "/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin"},
+        check=True,
+    ).stdout
+    assert "server_name chilli.example.com;" in rendered
+    assert rendered.count("proxy_pass http://127.0.0.1:8001;") == 2
+    assert "proxy_set_header Host              $host;" in rendered  # nginx's own variables survive
+    assert "$remote_addr" in rendered and "$scheme" in rendered
