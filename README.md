@@ -5,7 +5,9 @@
 Self-hosted memory for Claude, ChatGPT and Cursor: screenshots and links go to your own server, a model
 describes them, and your assistant finds them over MCP.
 
-![Chilli demo](docs/assets/demo.gif)
+![Chilli demo: save a screenshot or a link with one tap, then ask your AI about it weeks later](docs/assets/demo.gif)
+
+<sub>An illustration of the flow, not a screen recording; the chat answers are what Chilli returns for its demo data. [Full video (MP4)](docs/assets/demo.mp4).</sub>
 
 ## Why Chilli
 

@@ -1,0 +1,387 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 900px; overflow: hidden; }
+  body { background: #f3efe7; font-family: Inter, sans-serif; color: #1f2128; position: relative; }
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  #caption { position: absolute; bottom: 40px; left: 0; right: 0; text-align: center; font-size: 44px; font-weight: 700; letter-spacing: -0.5px; z-index: 50; }
+  #caption .hl { color: #e8492b; }
+
+  .phone { position: absolute; width: 330px; height: 660px; border-radius: 50px; background: #15171c; border: 3px solid #2b2f38; box-shadow: 0 30px 70px rgba(40,30,20,.35); }
+  .phone .screen { position: absolute; inset: 13px; border-radius: 38px; background: #fafafa; overflow: hidden; color: #111; }
+  .phone .btn { position: absolute; left: -8px; top: 140px; width: 6px; height: 44px; border-radius: 3px; background: #2b2f38; }
+  .phone .ring { position: absolute; left: -66px; top: 136px; width: 52px; height: 52px; border-radius: 50%; border: 4px solid #e8492b; opacity: 0; }
+  .notch { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 100px; height: 30px; border-radius: 16px; background: #15171c; z-index: 5; }
+  .statusbar { height: 54px; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 28px 6px; font-size: 14px; font-weight: 600; }
+  .post { margin: 8px 12px; background: #fff; border-radius: 16px; border: 1px solid #e6e6e6; padding: 13px; }
+  .who { display: flex; gap: 10px; align-items: center; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #7bc67e, #3d8b5a); }
+  .who b { display: block; font-size: 14px; } .who span { color: #888; font-size: 12px; }
+  .post p { font-size: 15px; line-height: 1.35; margin: 10px 0; }
+  .post .img { border-radius: 12px; overflow: hidden; height: 230px; }
+  .post .meta { display: flex; justify-content: space-between; color: #999; font-size: 12px; margin-top: 10px; }
+  .post.ghost { opacity: .5; } .post.ghost .img { height: 80px; background: #eee; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  .toast { position: absolute; left: 12px; right: 12px; top: 52px; background: rgba(30,32,38,.95); color: #fff; border-radius: 20px; padding: 13px 15px; display: flex; gap: 12px; align-items: center; opacity: 0; }
+  .toast .icon { width: 36px; height: 36px; border-radius: 10px; background: #e8492b; display: grid; place-items: center; font-size: 19px; font-weight: 800; }
+  .toast b { display: block; font-size: 15px; } .toast span { font-size: 13px; color: #c9cbd1; }
+
+  .bubble { position: absolute; background: #fff; border-radius: 26px; padding: 18px 24px; font-size: 26px; font-weight: 600; box-shadow: 0 10px 30px rgba(40,30,20,.15); opacity: 0; white-space: nowrap; }
+  .bubble::before, .bubble::after { content: ""; position: absolute; border-radius: 50%; background: #fff; box-shadow: 0 6px 14px rgba(40,30,20,.12); }
+  .bubble::before { width: 22px; height: 22px; left: 60px; bottom: -30px; }
+  .bubble::after { width: 12px; height: 12px; left: 48px; bottom: -50px; }
+
+  #s3 { background: #1a1d24; color: #e9ebef; }
+  .server { position: absolute; left: 260px; top: 250px; width: 230px; }
+  .card { position: absolute; left: 640px; top: 190px; width: 700px; background: #232733; border: 1px solid #343a48; border-radius: 22px; padding: 30px 34px; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+  .card .label { font-size: 15px; color: #8b93a3; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 8px; }
+  .card .row { font-size: 21px; color: #8b93a3; margin-top: 18px; opacity: 0; }
+  .card .row b { color: #fff; font-weight: 600; }
+  .tag { display: inline-block; background: #303645; color: #dfe3ea; border-radius: 9px; padding: 4px 12px; margin: 4px 6px 0 0; font-size: 18px; }
+  .meter { display: inline-block; vertical-align: middle; width: 220px; height: 12px; border-radius: 6px; background: #303645; margin: 0 12px; overflow: hidden; }
+  .meter i { display: block; height: 100%; background: #e8492b; width: 0; }
+
+  #s4t { background: #1f2128; color: #fff; display: grid; place-items: center; font-size: 64px; font-weight: 800; letter-spacing: -1px; }
+
+  .chat { position: absolute; left: 640px; top: 80px; width: 880px; height: 680px; background: #fff; border-radius: 22px; overflow: hidden; box-shadow: 0 30px 70px rgba(40,30,20,.25); }
+  .chat .top { height: 54px; border-bottom: 1px solid #eee; display: flex; align-items: center; padding: 0 22px; gap: 8px; font-size: 16px; font-weight: 600; color: #555; }
+  .chat .top .dot { width: 12px; height: 12px; border-radius: 50%; background: #e2ded6; }
+  .chat .top .pill { margin-left: auto; font-size: 13px; color: #b8432c; background: #fde9e4; border-radius: 20px; padding: 5px 12px; }
+  .conv { position: absolute; left: 0; right: 0; top: 54px; padding: 26px 36px; opacity: 0; }
+  .user { margin-left: auto; width: fit-content; max-width: 560px; background: #efebe3; border-radius: 18px; padding: 14px 18px; font-size: 22px; line-height: 1.4; min-height: 60px; }
+  .tool { margin-top: 22px; display: inline-flex; gap: 10px; align-items: center; border: 1px solid #e6e2da; border-radius: 12px; padding: 9px 14px; font-size: 15px; color: #555; opacity: 0; }
+  .tool code { font-family: "JetBrains Mono", monospace; font-size: 14px; color: #b8432c; }
+  .atext { margin-top: 18px; font-size: 21px; min-height: 30px; }
+  .res { display: flex; gap: 16px; align-items: center; border: 1px solid #ebe7df; border-radius: 14px; padding: 13px 16px; margin-top: 12px; opacity: 0; background: #fffdf9; }
+  .res .thumb { width: 64px; height: 64px; border-radius: 10px; flex: none; overflow: hidden; display: grid; place-items: center; font-size: 30px; background: #f1ede5; }
+  .res .score { width: 54px; height: 54px; border-radius: 14px; flex: none; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: #fff; background: #e8492b; }
+  .res b { display: block; font-size: 19px; } .res span { display: block; font-size: 16px; color: #666; line-height: 1.4; margin-top: 3px; } .res em { font-style: normal; font-size: 13px; color: #999; display: block; margin-top: 2px; }
+  .cursor { display: inline-block; width: 2px; height: 22px; background: #333; vertical-align: -4px; margin-left: 2px; }
+
+  #s7 { background: #1f2128; color: #fff; display: grid; place-items: center; text-align: center; }
+  .logo { font-size: 120px; font-weight: 800; letter-spacing: -3px; } .logo span { color: #e8492b; }
+  .sub { font-size: 36px; color: #d5d8df; margin-top: 8px; }
+  .url { font-family: "JetBrains Mono", monospace; font-size: 24px; color: #9097a5; margin-top: 34px; }
+
+  /* browser + share sheet */
+  .browser { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  .browser .site { padding: 6px 20px 0; font-size: 12px; font-weight: 700; color: #2f6b3a; letter-spacing: .5px; text-transform: uppercase; }
+  .browser h3 { padding: 6px 20px 0; font-size: 23px; line-height: 1.2; }
+  .browser .by { padding: 6px 20px 10px; font-size: 12px; color: #888; }
+  .browser .hero { margin: 0 20px; height: 170px; border-radius: 12px; overflow: hidden; background: #e8f3ea; }
+  .browser .line { margin: 10px 20px 0; height: 10px; border-radius: 5px; background: #e9e9e9; }
+  .browser .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 92px; background: #f6f6f6; border-top: 1px solid #e5e5e5; padding: 10px 16px; }
+  .browser .url { background: #e9e9ec; border-radius: 12px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #333; }
+  .browser .icons { display: flex; justify-content: space-between; padding: 10px 14px 0; font-size: 20px; color: #2a72d8; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background: #f2f2f6; border-radius: 22px 22px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.15); transform: translateY(320px); padding: 16px; }
+  .sheet .head { display: flex; gap: 10px; align-items: center; background: #fff; border-radius: 12px; padding: 10px; }
+  .sheet .fav { width: 38px; height: 38px; border-radius: 9px; background: #2f6b3a; color: #fff; font-weight: 800; display: grid; place-items: center; }
+  .sheet .head b { display: block; font-size: 13px; } .sheet .head span { font-size: 12px; color: #888; }
+  .sheet .apps { display: flex; justify-content: space-between; padding: 22px 6px 0; }
+  .sheet .app { width: 60px; text-align: center; font-size: 11px; color: #333; }
+  .sheet .app i { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; margin: 0 auto 6px; font-style: normal; font-size: 26px; color: #fff; font-weight: 800; }
+  .tap { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.35); border: 3px solid #fff; box-shadow: 0 0 0 3px rgba(30,32,38,.45); opacity: 0; z-index: 9; }
+</style></head>
+<body>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="pot">
+    <path d="M95 105 L205 105 L195 205 L105 205 Z" fill="#4f7cac"/>
+    <rect x="105" y="160" width="90" height="40" fill="#8fc3e8" opacity=".75"/>
+    <path d="M102 84 L198 84 L190 158 L110 158 Z" fill="#6f9fd0"/>
+    <rect x="110" y="92" width="80" height="20" fill="#7a5a3a"/>
+    <path d="M150 158 C150 170, 146 178, 150 190" stroke="#f2e6c9" stroke-width="6" fill="none"/>
+    <path d="M150 92 L150 38" stroke="#3d8b5a" stroke-width="5"/>
+    <ellipse cx="130" cy="60" rx="20" ry="10" fill="#4caf50" transform="rotate(-25 130 60)"/>
+    <ellipse cx="172" cy="52" rx="22" ry="10" fill="#4caf50" transform="rotate(25 172 52)"/>
+    <ellipse cx="135" cy="36" rx="16" ry="8" fill="#5cbf60" transform="rotate(-30 135 36)"/>
+    <circle cx="170" cy="76" r="9" fill="#e53935"/><circle cx="158" cy="82" r="7" fill="#e53935"/>
+  </g>
+  <g id="planter"><rect width="300" height="230" fill="#e8f3ea"/><rect y="190" width="300" height="40" fill="#d6c4a8"/><use href="#pot"/></g>
+</defs></svg>
+
+<!-- S1: on the couch -->
+<div class="scene" id="s1">
+  <svg width="1600" height="900" style="position:absolute;inset:0">
+    <rect width="1600" height="900" fill="#f3efe7"/>
+    <rect y="660" width="1600" height="240" fill="#e4dccd"/>
+    <rect x="120" y="100" width="250" height="300" rx="10" fill="#cfe3ef" stroke="#fff" stroke-width="12"/>
+    <line x1="245" y1="100" x2="245" y2="400" stroke="#fff" stroke-width="8"/>
+    <line x1="820" y1="330" x2="820" y2="660" stroke="#555" stroke-width="6"/>
+    <path d="M775 330 L865 330 L845 270 L795 270 Z" fill="#f2b84b"/>
+    <rect x="130" y="410" width="560" height="180" rx="40" fill="#5c7fa3"/>
+    <rect x="160" y="540" width="500" height="110" rx="24" fill="#6d93ba"/>
+    <rect x="110" y="470" width="80" height="190" rx="30" fill="#4f7194"/>
+    <rect x="630" y="470" width="80" height="190" rx="30" fill="#4f7194"/>
+    <g id="g1" transform="translate(410 660)"></g>
+    <text id="chill" x="470" y="200" font-family="Inter" font-size="44" font-weight="800" fill="#5c7fa3" opacity="0">chill.</text>
+  </svg>
+  <div class="bubble" id="think" style="left:430px; top:110px;">I'll never remember this…</div>
+  <div class="phone" id="ph1" style="left:1080px; top:100px;">
+    <div class="btn" id="btn1"></div><div class="ring" id="ring1"></div>
+    <div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>●●● 5G</span></div>
+      <div id="feed1">
+        <div class="post ghost"><div class="who"><div class="avatar" style="background:#bbb"></div><div><b>Someone</b><span>1h</span></div></div><div class="img"></div></div>
+        <div class="post">
+          <div class="who"><div class="avatar"></div><div><b>Urban Balcony</b><span>@urbanbalcony · 2h</span></div></div>
+          <p>Going away for a week? Two buckets, one cotton wick, zero dead tomatoes. 🍅</p>
+          <div class="img"><svg viewBox="0 0 300 230" width="100%" height="100%"><use href="#planter"/></svg></div>
+          <div class="meta"><span>💬 48</span><span>🔁 312</span><span>♥ 2.1K</span></div>
+        </div>
+        <div class="post ghost"><div class="who"><div class="avatar" style="background:#bbb"></div><div><b>Someone</b><span>3h</span></div></div><div class="img"></div></div>
+      </div>
+      <div class="flash" id="flash1"></div>
+      <div class="browser" id="browser">
+        <div class="statusbar" style="position:relative;z-index:2;background:#fff"><span>9:42</span><span>●●● 5G</span></div>
+        <div id="article">
+          <div class="site">RHS · Grow your own</div>
+          <h3>Growing tomatoes in pots: varieties and spacing</h3>
+          <div class="by">6 min read</div>
+          <div class="hero"><svg viewBox="40 0 220 200" width="100%" height="100%"><use href="#pot"/></svg></div>
+          <div class="line"></div><div class="line" style="width:80%"></div><div class="line"></div><div class="line" style="width:60%"></div>
+        </div>
+        <div class="bar"><div style="display:flex;gap:10px;align-items:center"><div class="url" style="flex:1">🔒 rhs.org.uk</div><div id="shareBtn" style="width:40px;height:36px;border-radius:10px;background:#e9e9ec;display:grid;place-items:center;font-size:20px;color:#2a72d8">⇪</div></div></div>
+        <div class="sheet" id="sheet">
+          <div class="head"><div class="fav">R</div><div><b>Growing tomatoes in pots: varieties…</b><span>rhs.org.uk</span></div></div>
+          <div class="apps">
+            <div class="app"><i style="background:#34c759">💬</i>Messages</div>
+            <div class="app"><i style="background:#2a72d8">✉️</i>Mail</div>
+            <div class="app"><i style="background:#f5c542">📝</i>Notes</div>
+            <div class="app" id="chilliApp"><i style="background:#e8492b">C</i>Chilli</div>
+          </div>
+        </div>
+        <div class="toast" id="toast2"><div class="icon">C</div><div><b>Link saved to Chilli</b><span>rhs.org.uk · Growing tomatoes in pots</span></div></div>
+      </div>
+      <div class="tap" id="tap"></div>
+      <div class="toast" id="toast1"><div class="icon">C</div><div><b>Saved to Chilli</b><span>Your server takes it from here</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- S3: the server -->
+<div class="scene" id="s3">
+  <svg class="server" viewBox="0 0 230 330" width="230" height="330">
+    <rect x="10" y="10" width="210" height="310" rx="18" fill="#2b303c" stroke="#3d4454" stroke-width="3"/>
+    <rect x="35" y="45" width="160" height="50" rx="8" fill="#363c4a"/><circle id="l1" cx="170" cy="70" r="7" fill="#3ddc84"/>
+    <rect x="35" y="120" width="160" height="50" rx="8" fill="#363c4a"/><circle id="l2" cx="170" cy="145" r="7" fill="#3ddc84"/>
+    <rect x="35" y="195" width="160" height="50" rx="8" fill="#363c4a"/><circle id="l3" cx="170" cy="220" r="7" fill="#e8492b"/>
+    <text x="115" y="290" text-anchor="middle" font-family="Inter" font-size="20" font-weight="700" fill="#9aa2b1">your server</text>
+  </svg>
+  <div class="card">
+    <div class="label">New save, described by your own model</div>
+    <div class="row" id="r1">Title<br><b>Self-watering planter from two buckets</b></div>
+    <div class="row" id="r2">Summary<br><b>Inner bucket, wicking cup, reservoir below. Survives a week away.</b></div>
+    <div class="row" id="r3"><span class="tag">diy</span><span class="tag">watering</span><span class="tag">containers</span></div>
+    <div class="row" id="r4">Balcony garden <span class="meter"><i id="m1"></i></span><b>8/10</b></div>
+  </div>
+</div>
+
+<div class="scene" id="s4t">3 weeks later…</div>
+
+<!-- S4 + S5: asking -->
+<div class="scene" id="s4">
+  <svg width="1600" height="900" style="position:absolute;inset:0">
+    <rect width="1600" height="900" fill="#f3efe7"/>
+    <rect y="700" width="1600" height="200" fill="#e4dccd"/>
+    <g id="suitcase" transform="translate(360 0)">
+      <rect x="20" y="560" width="190" height="150" rx="18" fill="#2f8f83"/>
+      <rect x="80" y="530" width="70" height="34" rx="10" fill="none" stroke="#25706a" stroke-width="10"/>
+      <line x1="70" y1="560" x2="70" y2="710" stroke="#25706a" stroke-width="8"/><line x1="160" y1="560" x2="160" y2="710" stroke="#25706a" stroke-width="8"/>
+    </g>
+    <g id="g2" transform="translate(250 712) scale(1.15)"></g>
+  </svg>
+  <div class="bubble" id="think2" style="left:150px; top:110px;">Who will water my tomatoes?</div>
+  <div class="chat">
+    <div class="top"><div class="dot"></div><div class="dot"></div><div class="dot"></div>&nbsp; Your AI assistant <span class="pill">● Chilli connected</span></div>
+
+    <div class="conv" id="c1">
+      <div class="user"></div>
+      <div class="tool">🔎 Chilli · <code>search_saves("watering plants while away")</code></div>
+      <div class="atext" data-t="Found it. You saved this 3 weeks ago:"></div>
+      <div class="res"><div class="thumb"><svg viewBox="40 20 220 200" width="64" height="64"><use href="#planter"/></svg></div>
+        <div><b>Self-watering planter from two buckets</b><span>Inner bucket, wicking cup, reservoir below. Survives a week away.</span><em>screenshot · Instagram</em></div></div>
+      <div class="res"><div class="thumb" style="background:#e6eef5">💧</div>
+        <div><b>Drip irrigation starter kit for balconies</b><span>Timer, up to 15 pots, connects to an outdoor tap.</span><em>link · gardena.com</em></div></div>
+    </div>
+
+    <div class="conv" id="c2">
+      <div class="user"></div>
+      <div class="tool">🏆 Chilli · <code>top_saves(project="Balcony garden")</code></div>
+      <div class="atext" data-t="Your best saves for the balcony, rated by usefulness:"></div>
+      <div class="res"><div class="score">9</div><div><b>Growing tomatoes in pots: varieties and spacing</b><em>The core plan for this season's balcony crop.</em></div></div>
+      <div class="res"><div class="score">8</div><div><b>Self-watering planter from two buckets</b><em>Solves watering during the summer holidays.</em></div></div>
+      <div class="res"><div class="score" style="background:#f08a73">7</div><div><b>Drip irrigation starter kit for balconies</b><em>An alternative to the DIY planter for the whole balcony.</em></div></div>
+    </div>
+
+    <div class="conv" id="c3">
+      <div class="user"></div>
+      <div class="tool">🗂️ Chilli · <code>from_archive()</code></div>
+      <div class="atext" data-t="Two good ones you saved weeks ago and never opened:"></div>
+      <div class="res"><div class="thumb">💸</div><div><b>Pricing page teardown: three tiers that convert</b><span>One plan highlighted, annual discount shown as months free.</span><em>Indie app launch · 8/10 · 5 weeks ago</em></div></div>
+      <div class="res"><div class="thumb">🍅</div><div><b>Growing tomatoes in pots: varieties and spacing</b><span>Bush varieties, pot sizes, feeding, starting seeds indoors.</span><em>Balcony garden · 9/10 · 4 weeks ago</em></div></div>
+    </div>
+
+    <div class="conv" id="c4">
+      <div class="user"></div>
+      <div class="tool">🔔 Chilli · <code>remind_save("Drip irrigation starter kit", "Friday")</code></div>
+      <div class="atext" data-t="Done. I'll bring it up on Friday morning."></div>
+      <div class="res"><div class="thumb" style="background:#fde9e4">🔔</div><div><b>Friday, 8:00</b><span>Drip irrigation starter kit for balconies</span><em>It will also show up in your daily digest.</em></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- S6: balcony -->
+<div class="scene" id="s6">
+  <svg width="1600" height="900" style="position:absolute;inset:0">
+    <rect width="1600" height="900" fill="#cfe7f5"/>
+    <circle cx="1350" cy="170" r="70" fill="#ffd45e"/>
+    <rect y="620" width="1600" height="280" fill="#d9cdb8"/>
+    <rect y="600" width="1600" height="24" fill="#8a7a63"/>
+    <g fill="none" stroke="#8a7a63" stroke-width="10">
+      <line x1="0" y1="470" x2="1600" y2="470"/>
+      <line x1="100" y1="470" x2="100" y2="610"/><line x1="300" y1="470" x2="300" y2="610"/><line x1="500" y1="470" x2="500" y2="610"/>
+      <line x1="1100" y1="470" x2="1100" y2="610"/><line x1="1300" y1="470" x2="1300" y2="610"/><line x1="1500" y1="470" x2="1500" y2="610"/>
+    </g>
+    <g transform="translate(760 282) scale(1.6)"><use href="#pot"/><circle cx="128" cy="70" r="8" fill="#e53935"/><circle cx="182" cy="62" r="8" fill="#e53935"/></g>
+    <g transform="translate(1100 364) scale(1.2)"><use href="#pot"/></g>
+    <g id="g3" transform="translate(560 720) scale(1.15)"></g>
+  </svg>
+</div>
+
+<div class="scene" id="s7"><div><div class="logo">Ch<span>i</span>lli</div><div class="sub">Press one button. Ask your AI anything later.</div><div class="url">github.com/pawelmnowak1990-Now4czek/chilli · MIT</div></div></div>
+
+<div id="caption"></div>
+
+<script src="guy.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const p = (t, a, b) => ease((t - a) / (b - a));
+const win = (t, a, b, f = .35) => Math.min(p(t, a, a + f), 1 - p(t, b - f, b));
+
+// Scenes: [start, end] in seconds
+const T = { s1: [0, 8.6], s3: [8.6, 12.4], s4t: [12.4, 13.8], s4: [13.8, 34.0], s6: [34.0, 37.0], s7: [37.0, 41.0] };
+// Conversations in the chat window
+const CONV = [
+  { id: 'c1', a: 15.2, b: 21.6, q: "I'm away next week. What did I save about watering plants?" },
+  { id: 'c2', a: 21.6, b: 25.8, q: "What's most useful for my balcony garden?" },
+  { id: 'c3', a: 25.8, b: 30.0, q: "Anything good I saved and forgot about?" },
+  { id: 'c4', a: 30.0, b: 34.0, q: "Remind me about the drip kit on Friday." },
+];
+const CAPTIONS = [
+  [0.4, 4.6, 'See something worth keeping?'],
+  [4.6, 8.4, 'Screenshot: one button. <span class="hl">Then chill.</span>'],
+  [8.8, 12.4, 'Your server describes it and rates it for your projects.'],
+  [14.0, 21.6, 'Weeks later, <span class="hl">just ask.</span>'],
+  [21.6, 25.8, 'Ask what matters for a project.'],
+  [25.8, 30.0, 'Ask what you forgot.'],
+  [30.0, 34.0, 'Ask it to remind you.'],
+  [34.0, 37.0, 'Nothing forgotten. 🍅'],
+];
+
+let last = {};
+function draw(id, opts) {           // redraw a character only when its pose changes
+  const key = JSON.stringify(opts);
+  if (last[id] !== key) { $(id).innerHTML = guy(opts); last[id] = key; }
+}
+
+function convRender(t, c) {
+  const el = $(c.id), d = t - c.a;
+  el.style.opacity = Math.min(p(t, c.a, c.a + .25), 1 - p(t, c.b - .25, c.b));
+  const typeDur = Math.min(1.4, c.q.length * 0.025);
+  const n = Math.floor(clamp(d / typeDur) * c.q.length);
+  el.querySelector('.user').innerHTML = c.q.slice(0, n) + (d > 0 && d < typeDur + .3 ? '<span class="cursor"></span>' : '');
+  el.querySelector('.tool').style.opacity = p(d, typeDur + .2, typeDur + .45);
+  const at = el.querySelector('.atext'), txt = at.dataset.t;
+  at.textContent = txt.slice(0, Math.floor(clamp((d - typeDur - .7) / .5) * txt.length));
+  el.querySelectorAll('.res').forEach((r, i) => {
+    const k = p(d, typeDur + 1.3 + i * .3, typeDur + 1.6 + i * .3);
+    r.style.opacity = k; r.style.transform = `translateY(${(1 - k) * 14}px)`;
+  });
+  return d > typeDur + 1.3;          // the answer is on screen
+}
+
+// The link scene (S2) is inserted at 8.4 s and lasts 5.6 s; the rest of the timeline is shifted.
+const S2A = 8.4, S2B = 14.0;
+function render(t0) {
+  const t = t0 < S2A ? t0 : (t0 < S2B ? S2A : t0 - (S2B - S2A));
+  for (const [id, [a, b]] of Object.entries(T)) {
+    $(id).style.opacity = Math.min(a === 0 ? 1 : p(t, a - .2, a + .2), id === 's7' ? 1 : 1 - p(t, b - .2, b + .2));
+  }
+  let cap = '', capOp = 0;
+  for (const [a, b, text] of CAPTIONS) if (t >= a && t < b) { cap = text; capOp = win(t, a, b, .3); }
+  $('caption').innerHTML = cap; $('caption').style.opacity = capOp;
+  $('caption').style.color = (t > 8.6 && t < 12.4) ? '#fff' : '#1f2128';
+
+  // S1: couch
+  const blink = (t % 3.1) < 0.12;
+  const saved = t > 6.3;
+  draw('g1', {
+    pose: 'sit', arms: saved ? 'relax' : 'phone',
+    mood: saved ? 'happy' : (t > 2.2 && t < 4.6 ? 'think' : 'neutral'),
+    look: 'down', flash: t > 5.4 && t < 5.9, blink,
+  });
+  $('g1').setAttribute('transform', `translate(410 ${660 + (saved ? 0 : Math.sin(t * 2) * 1.5)}) scale(1.2)`);
+  $('feed1').style.transform = `translateY(${-p(t, 0.3, 2.0) * 120}px)`;
+  $('think').style.opacity = win(t, 2.2, 4.6, .3);
+  const pr = clamp((t - 4.9) / 0.6);
+  $('ring1').style.opacity = pr > 0 && pr < 1 ? 1 - pr : 0;
+  $('ring1').style.transform = `scale(${0.6 + pr * 0.9})`;
+  $('btn1').style.background = t > 4.9 && t < 5.5 ? '#e8492b' : '#2b2f38';
+  $('flash1').style.opacity = t > 5.4 && t < 5.9 ? 1 - p(t, 5.4, 5.9) : 0;
+  const ti = p(t, 5.6, 5.9);
+  $('toast1').style.opacity = ti; $('toast1').style.transform = `translateY(${(1 - ti) * -30}px)`;
+  $('chill').setAttribute('opacity', p(t, 6.6, 7.0));
+  $('chill').setAttribute('y', 200 - p(t, 6.6, 8.6) * 30);
+  $('ph1').style.transform = `translateY(${p(t, 6.3, 7.0) * 30}px)`;
+
+  // S3: server
+  ['l1', 'l2', 'l3'].forEach((id, i) => $(id).setAttribute('opacity', (Math.sin(t * 9 + i * 2) > 0) ? 1 : .35));
+  ['r1', 'r2', 'r3', 'r4'].forEach((id, i) => { $(id).style.opacity = p(t, 9.2 + i * 0.6, 9.6 + i * 0.6); });
+  $('m1').style.width = `${p(t, 11.2, 11.9) * 80}%`;
+
+  // S4/S5: asking
+  $('think2').style.opacity = win(t, 14.0, 16.4, .3);
+  let answered = false, asking = false;
+  for (const c of CONV) if (t >= c.a - .3 && t < c.b) { const a = convRender(t, c); answered = a; asking = !a; }
+  for (const c of CONV) if (!(t >= c.a - .3 && t < c.b)) $(c.id).style.opacity = 0;
+  draw('g2', {
+    pose: 'stand',
+    arms: t < 15.0 ? 'chin' : (answered ? 'down' : 'phone'),
+    mood: t < 15.0 ? 'worried' : (answered ? 'happy' : 'neutral'),
+    look: asking ? 'down' : '', blink,
+  });
+
+  // S2: sharing a link from the browser (uses the real time t0)
+  const s2 = t0 - S2A, inS2 = t0 >= S2A && t0 < S2B;
+  $('browser').style.opacity = inS2 ? p(s2, 0.2, 0.6) : (t0 >= S2B ? 1 : 0);
+  if (inS2 || t0 >= S2B) {
+    $('toast1').style.opacity = 1 - p(s2, 0, 0.4);
+    $('chill').setAttribute('opacity', 1 - p(s2, 0, 0.4));
+    $('ph1').style.transform = `translateY(${30 - p(s2, 0, 0.5) * 30}px)`;
+    $('article').style.transform = `translateY(${-p(s2, 0.7, 1.6) * 40}px)`;
+    $('sheet').style.transform = `translateY(${320 - p(s2, 2.0, 2.4) * 320 + p(s2, 3.1, 3.4) * 320}px)`;
+    const t2 = p(s2, 3.3, 3.6);
+    $('toast2').style.opacity = t2; $('toast2').style.transform = `translateY(${(1 - t2) * -30}px)`;
+    // taps: share button, then the Chilli icon
+    const tapAt = (a, x, y) => { const k = clamp((s2 - a) / 0.45); return k > 0 && k < 1 ? { o: 1 - k, sc: .7 + k * .6, x, y } : null; };
+    const scr = $('browser').getBoundingClientRect();
+    const centre = el => { const r = el.getBoundingClientRect(); return [r.left - scr.left + r.width / 2 - 23, r.top - scr.top + r.height / 2 - 23]; };
+    const tp = tapAt(1.7, ...centre($('shareBtn'))) || tapAt(2.8, ...centre($('chilliApp').querySelector('i')));
+    $('tap').style.opacity = tp ? tp.o : 0;
+    if (tp) { $('tap').style.left = tp.x + 'px'; $('tap').style.top = tp.y + 'px'; $('tap').style.transform = `scale(${tp.sc})`; }
+    draw('g1', { pose: 'sit', arms: s2 > 3.7 ? 'relax' : 'phone', mood: s2 > 3.5 ? 'happy' : 'neutral', look: 'down', flash: false, blink });
+    if (inS2) { $('caption').innerHTML = 'Links too: <span class="hl">Share → Chilli.</span>'; $('caption').style.opacity = Math.min(p(s2, 0.3, 0.6), 1 - p(s2, 5.2, 5.5)); }
+  }
+
+  // S6: balcony
+  draw('g3', { pose: 'stand', arms: 'thumb', mood: 'happy' });
+}
+window.render = render;
+render(Number(new URLSearchParams(location.search).get('t') || 0));
+</script>
+</body></html>
