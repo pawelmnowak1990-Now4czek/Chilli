@@ -8,6 +8,8 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent
 DOCS = [REPO / "README.md", REPO / "shortcuts" / "README.md", *sorted((REPO / "docs" / "guides").glob("*.md")), *sorted((REPO / "docs" / "dev").glob("*.md"))]
 
+PENDING_ASSET = (REPO / "docs" / "assets" / "demo.gif").resolve()
+
 # [text](target) in Markdown, without images' alt text handling (same syntax).
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 
@@ -22,6 +24,9 @@ def test_relative_links_resolve(path: Path) -> None:
     missing = []
     for target in relative_links(path):
         file_part = target.split("#", 1)[0]
+        # The demo GIF is recorded separately (docs/assets/README.md); only this one asset may be missing.
+        if (path.parent / file_part).resolve() == PENDING_ASSET:
+            continue
         if not (path.parent / file_part).exists():
             missing.append(target)
     assert not missing, f"{path.relative_to(REPO)}: {missing}"

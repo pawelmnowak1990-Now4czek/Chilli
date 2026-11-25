@@ -1,22 +1,52 @@
 # Chilli
 
-One button saves what is on your phone screen to your own knowledge base, and your AI finds it
-again when it matters. Press the Action Button on your iPhone (or share a link, or click the browser
-extension): Chilli stores the screenshot, reads it with the model of your choice, gives it a title,
-summary, tags and a 1-10 usefulness score for each of your projects, and makes everything searchable
-for Claude, ChatGPT, Cursor or any other MCP client. It runs on your server, with your model and your key.
+**Press the Action Button. Your AI remembers it.**
 
-The name comes from "chill out": you do not have to remember anything, Chilli remembers for you.
+Self-hosted memory for Claude, ChatGPT and Cursor: screenshots and links go to your own server, a model
+describes them, and your assistant finds them over MCP.
 
-## What makes it different
+![Chilli demo](docs/assets/demo.gif)
 
-- **One-press capture.** An iPhone Shortcut on the Action Button sends the screenshot; no app to open,
-  no folders, no tags, no titles. A share-sheet Shortcut and a browser extension cover links and text.
-- **A remote MCP server, ready for AI clients.** Add it as a custom connector in claude.ai and your
-  saves are available in every chat and in scheduled tasks (daily or weekly digests), not only on one computer.
-- **Saves rated against your projects, and brought back.** Each save gets a 1-10 score for every
-  project you describe. Chilli brings forgotten but useful saves back (`from_archive`), keeps reminders,
-  and rates RSS feed entries against the same projects.
+## Why Chilli
+
+- **One-button capture.** The iPhone Action Button saves a screenshot; the share sheet saves a link;
+  a browser extension saves pages, selections and tab screenshots. No folders, tags or titles.
+- **A remote MCP server.** Add it as a custom connector in claude.ai and your saves are there in every
+  chat and in scheduled tasks, not only on one computer.
+- **Ratings per project.** Describe your projects once; every save gets a 1-10 usefulness score for each.
+- **Recall.** Forgotten but useful saves come back (`from_archive`), reminders when you ask for them,
+  and a daily or weekly digest written by a scheduled task.
+- **Bring your own model.** Anthropic, or any OpenAI-compatible API, including a local model in Ollama.
+- **Small to run.** One `docker compose` with Postgres on a small VPS or a home server.
+
+## Quick start
+
+1. `git clone https://github.com/pawelmnowak1990-Now4czek/chilli.git && cd chilli`
+2. `./setup.sh` asks for your domain, model and key, writes `.env`, starts the containers and prints
+   your capture token and MCP address.
+3. Add the [iPhone Shortcut](docs/guides/ios-shortcuts.md) and the [connector in your AI client](docs/guides/mcp-clients.md).
+
+Details, nginx instead of Caddy, updates and backups: [docs/guides/install.md](docs/guides/install.md).
+Try it with demo data first: `docker compose exec api python -m app.demo_seed --apply`
+([more](docs/guides/install.md#try-it-with-demo-data)).
+
+## Privacy
+
+- Your saves, screenshots and ratings live only on your server, in your database.
+- Screenshots and page text are sent to the model provider you configure, to be described; with a
+  local model (Ollama, LM Studio) they never leave your machines.
+- Embeddings are computed locally; search needs no API.
+- To read a saved link, the server fetches that page from its site; posts on X go through the public
+  fxtwitter API.
+- No telemetry: nothing is sent to the authors.
+
+## Status
+
+v0.1, early. Tested live with Claude (Anthropic); the OpenAI-compatible adapter, local models and the
+ChatGPT connector are covered by tests only so far. Feedback and reports of what works are welcome via
+[issues](https://github.com/pawelmnowak1990-Now4czek/chilli/issues).
+
+License: MIT, see [LICENSE](LICENSE).
 
 ## Features
 
@@ -41,31 +71,6 @@ The name comes from "chill out": you do not have to remember anything, Chilli re
   Chilli can be reached over HTTPS. Without one, Chilli runs local-only.
 - A model: an API key for Claude or an OpenAI-compatible service, or a local server such as Ollama
   with a model that can read images.
-
-## Quick start
-
-```bash
-git clone https://github.com/pawelmnowak1990-Now4czek/chilli.git
-cd chilli
-./setup.sh
-```
-
-`setup.sh` asks for:
-
-1. the web server: **caddy** (automatic HTTPS, needs free ports 80 and 443), **nginx** (you already
-   run nginx on this server; it writes the site file and prints the certbot commands), or **none** (local only),
-2. the domain, e.g. `chilli.example.com`,
-3. the model provider, model, API key and, for OpenAI-compatible servers, the server address,
-4. the language for titles and summaries (`en`, `pl`, `de`...) and, optionally, your name.
-
-It generates the passwords and tokens, writes `.env` (readable only by you), starts the containers,
-runs `python -m app.doctor` and prints, once:
-
-- the capture URL `https://chilli.example.com/capture` and the capture token (for the iPhone Shortcuts and the extension),
-- the MCP URL `https://chilli.example.com/mcp` and the header `Authorization: Bearer <MCP_SECRET>` (for AI clients).
-
-Then: [build the iPhone Shortcuts](docs/guides/ios-shortcuts.md), [load the browser extension](docs/guides/browser-extension.md)
-and [connect your AI client](docs/guides/mcp-clients.md).
 
 ## How it works
 
