@@ -1,0 +1,29 @@
+# When a release is published (v0.1.0, ...), pack the browser extension folder into
+# chilli-extension-<manifest version>.zip and attach it to that release, so people can install the
+# extension without git. Triggered by the published release rather than the tag push, because the
+# release must exist before a file can be attached to it.
+name: Release extension
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pack the extension
+        run: |
+          VERSION=$(jq -r .version extension/manifest.json)
+          echo "ZIP=chilli-extension-$VERSION.zip" >> "$GITHUB_ENV"
+          cd extension && zip -r "../chilli-extension-$VERSION.zip" . -x '.*'
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "$ZIP" --clobber

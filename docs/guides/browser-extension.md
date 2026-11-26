@@ -6,11 +6,14 @@ what you already saved about the page you are on.
 
 ## Install
 
-1. Get the code: `git clone https://github.com/pawelmnowak1990-Now4czek/chilli.git` (or `git pull` in an existing checkout).
+1. Download `chilli-extension-<version>.zip` from the latest
+   [release](https://github.com/pawelmnowak1990-Now4czek/chilli/releases/latest) and unzip it.
+   Keep the unzipped folder where it is: the browser loads the extension from it.
+   (Or use the `extension` folder of a git checkout.)
 2. Open the extensions page: `chrome://extensions` (Edge: `edge://extensions`, Brave: `brave://extensions`,
    Dia: `dia://extensions`).
 3. Turn on **Developer mode**.
-4. **Load unpacked** → choose the `extension` folder of the checkout.
+4. **Load unpacked** → choose the unzipped folder (the one that contains `manifest.json`).
 5. Pin the chilli icon to the toolbar (the puzzle icon → the pin next to Chilli).
 
 The options page opens on first install (later: right-click the icon → Options).
@@ -56,7 +59,8 @@ token only.
 
 ## Update
 
-`git pull` in the checkout, then the reload arrow next to Chilli on the extensions page. If an update
+Download and unzip the new release over the old folder (or `git pull` in the checkout), then click
+the reload arrow next to Chilli on the extensions page. If an update
 changes permissions, open the options and click **Save** once to grant access again.
 
 ## Limits
@@ -64,4 +68,4 @@ changes permissions, open the options and click **Save** once to grant access ag
 - Browser pages such as `chrome://...`, the extension store and the built-in PDF viewer do not allow
   extensions to read the page: screenshots and selections may fail there.
 - Selections up to 200,000 characters are stored; the model reads the first 30,000.
-- Not in the Chrome Web Store yet: install from the folder as above.
+- Not in the Chrome Web Store yet: install from the folder as above. Safari is not supported yet.

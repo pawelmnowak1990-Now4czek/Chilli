@@ -37,6 +37,8 @@ describes them, and your assistant finds them over MCP.
 2. `./setup.sh` asks for your domain, model and key, writes `.env`, starts the containers and prints
    your capture token and MCP address.
 3. Add the [iPhone Shortcut](docs/guides/ios-shortcuts.md) and the [connector in your AI client](docs/guides/mcp-clients.md).
+4. Optional: the [browser extension](docs/guides/browser-extension.md) for Chrome, Edge, Brave, Arc and
+   Dia (download the zip from the latest release).
 
 Details, nginx instead of Caddy, updates and backups: [docs/guides/install.md](docs/guides/install.md).
 Never rented a server? [Step-by-step guide for non-technical people](docs/guides/beginners.md), or

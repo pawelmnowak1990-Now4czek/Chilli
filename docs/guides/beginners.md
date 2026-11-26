@@ -20,7 +20,7 @@ ChatGPT or another assistant, and it walks you through these same steps one at a
 | A server (VPS) with 2 vCPU and 4 GB RAM, Ubuntu 24.04 | about 4-8 EUR / USD a month | Any provider works: Hetzner, DigitalOcean, OVH, Vultr, Linode... 2 GB RAM also works with swap (step 4). |
 | A domain name | about 10-15 EUR / USD a year | Bought from any registrar (Cloudflare, Namecheap, OVH, IONOS, Porkbun...). A subdomain of a domain you already own is fine and free. |
 | An API key for the AI model | pay per use | For Claude: an account at [console.anthropic.com](https://console.anthropic.com). Set a monthly spend limit there. |
-| An iPhone with the Shortcuts app | | Android has no ready-made guide yet; the browser extension works on any computer. |
+| An iPhone with the Shortcuts app | | Android has no ready-made guide yet; the browser extension works in Chrome, Edge, Brave, Arc and Dia on any computer. |
 | A computer with a terminal | free | Mac: the **Terminal** app. Windows: **PowerShell** or **Windows Terminal**. |
 
 Keep a password manager or a private note open. During the install you will get three secret values
@@ -178,6 +178,15 @@ permission to use the connector.
 
 Then tell Claude about your projects, so every save gets a usefulness score for each: "Add a Chilli
 project 'Kitchen renovation' about planning a small kitchen on a budget."
+
+## Optional: save from your computer's browser
+
+In Chrome, Edge, Brave, Arc or Dia, the Chilli extension saves the page, selected text or a
+screenshot of the tab with one click, and shows what you already saved about the page you are on.
+Download the zip from the latest
+[release](https://github.com/pawelmnowak1990-Now4czek/chilli/releases/latest) and follow
+[browser-extension.md](browser-extension.md); it needs the same server address and capture token as
+the iPhone. Safari is not supported yet.
 
 ## Step 10. Backups (recommended)
 
