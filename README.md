@@ -118,6 +118,7 @@ Reports of what works are welcome. Details: [docs/guides/configuration.md](docs/
 - [Browser extension](docs/guides/browser-extension.md)
 - [AI clients over MCP](docs/guides/mcp-clients.md)
 - [Daily and weekly digests](docs/guides/digests.md)
+- [X bookmarks import (optional)](docs/guides/x-bookmarks.md)
 - [Build log (developer notes)](docs/dev/README.md)
 
 ## Development

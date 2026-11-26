@@ -61,6 +61,17 @@ How structured output works with OpenAI-compatible servers, and what is untested
 | `RELATED_MAX_DISTANCE` | `0.15` | Largest cosine distance at which a save counts as related to the page open in the extension. Lower = fewer, more accurate. |
 | `FEED_POLL_HOURS` | `6` | How often RSS feeds are fetched; `0` turns it off. |
 
+## X bookmarks import (optional)
+
+Setup and costs: [x-bookmarks.md](x-bookmarks.md).
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `X_CLIENT_ID` | empty | OAuth 2.0 client id of your app at console.x.com. Empty (or `X_CLIENT_SECRET` empty) = the import is off and `/x/connect` answers 404. |
+| `X_CLIENT_SECRET` | empty | **Secret.** OAuth 2.0 client secret of the same app. |
+| `X_BOOKMARKS_POLL_MINUTES` | `30` | How often new bookmarks are fetched; `0` turns polling off. |
+| `X_BOOKMARKS_BACKFILL` | `false` | First sync: `true` imports the bookmarks you already have (up to about 800, each a paid read); `false` starts from now. |
+
 ## Database
 
 | Variable | Default | Meaning |
