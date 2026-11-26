@@ -80,6 +80,16 @@ class Settings(BaseSettings):
     # How often, in hours, the service fetches subscribed RSS feeds (app/feeds.py). 0 disables it.
     feed_poll_hours: float = 6
 
+    # X (Twitter) bookmarks import (app/x_bookmarks.py, docs/guides/x-bookmarks.md). Both empty =
+    # the feature is off: /x/connect and /x/callback answer 404 and no poller thread starts.
+    x_client_id: str = ""
+    x_client_secret: str = ""
+    # How often, in minutes, new bookmarks are fetched. 0 disables polling.
+    x_bookmarks_poll_minutes: float = 30
+    # First sync: true = import every bookmark X still returns (up to about 800);
+    # false = only mark the current ones as seen, so only bookmarks added later come in.
+    x_bookmarks_backfill: bool = False
+
 
 # One shared instance imported by the rest of the code.
 settings = Settings()

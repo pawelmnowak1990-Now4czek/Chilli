@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app import capture, db, feeds, language, mcp_server, processing, related
+from app import capture, db, feeds, language, mcp_server, processing, related, x_bookmarks, x_routes
 from app.config import settings
 
 # Messages from background processing (INFO and above) go to `docker compose logs api`.
@@ -19,15 +19,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 
 class HideSecretFilter(logging.Filter):
-    """Uvicorn logs the path of every request, including the old MCP address with the secret.
-    This filter replaces the secret with *** before the entry reaches the log."""
+    """Uvicorn logs the path of every request, including the old MCP address with the secret and
+    /x/connect?token=<capture token>. This filter replaces both with *** before the entry reaches the log."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if settings.mcp_secret and isinstance(record.args, tuple):
-            record.args = tuple(
-                arg.replace(settings.mcp_secret, "***") if isinstance(arg, str) else arg
-                for arg in record.args
-            )
+        secrets = [s for s in (settings.mcp_secret, settings.capture_token) if s]
+        if secrets and isinstance(record.args, tuple):
+            args = []
+            for arg in record.args:
+                if isinstance(arg, str):
+                    for secret in secrets:
+                        arg = arg.replace(secret, "***")
+                args.append(arg)
+            record.args = tuple(args)
         return True
 
 
@@ -46,6 +50,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     - Pending saves are finished in a separate thread, so the service accepts new ones right away
       (daemon=True: the thread does not block shutdown).
     - Another thread fetches subscribed RSS feeds every few hours (app/feeds.py).
+    - With the X import on, one more thread fetches new X bookmarks (app/x_bookmarks.py).
     - The MCP server needs its session manager running for the lifetime of the app.
     """
     language.log_active_language()
@@ -56,6 +61,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logging.getLogger(__name__).exception("could not update the database schema")
     threading.Thread(target=processing.process_pending, daemon=True).start()
     feeds.start_background_polling()
+    # Only with X_CLIENT_ID and X_CLIENT_SECRET set (app/x_bookmarks.py).
+    x_bookmarks.start_background_polling()
     if mcp_app is None:
         yield
     else:
@@ -69,6 +76,8 @@ app = FastAPI(title="Chilli", lifespan=lifespan)
 # A router is a group of addresses defined in another file; here it is attached to the app.
 app.include_router(capture.router)
 app.include_router(related.router)
+# /x/connect and /x/callback; they answer 404 while the X import is off.
+app.include_router(x_routes.router)
 
 
 @app.get("/health")

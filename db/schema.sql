@@ -131,3 +131,34 @@ CREATE TABLE IF NOT EXISTS feed_entries (
     UNIQUE (feed_id, entry_key)
 );
 CREATE INDEX IF NOT EXISTS feed_entries_score_idx ON feed_entries (created_at DESC, best_score);
+
+-- X (Twitter) bookmarks import (app/x_bookmarks.py), opt-in through X_CLIENT_ID / X_CLIENT_SECRET.
+-- One connected X account per instance (id is always 1). The tokens give read access to the
+-- owner's X account: they stay in this table only and are never logged. Database backups contain them.
+CREATE TABLE IF NOT EXISTS x_account (
+    id               smallint PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    user_id          text NOT NULL,
+    username         text,
+    access_token     text NOT NULL,
+    refresh_token    text,
+    expires_at       timestamptz NOT NULL,           -- when the access token stops working
+    first_sync_done  boolean NOT NULL DEFAULT false, -- false = the next sync is the first one
+    connected_at     timestamptz NOT NULL DEFAULT now(),
+    synced_at        timestamptz,                    -- last sync attempt (successful or not)
+    error            text                            -- error of the last sync; NULL = works
+);
+
+-- OAuth "state" values handed out by /x/connect, each usable once within a few minutes.
+-- The PKCE code_verifier waits here for the callback.
+CREATE TABLE IF NOT EXISTS x_oauth_state (
+    state          text PRIMARY KEY,
+    code_verifier  text NOT NULL,
+    created_at     timestamptz NOT NULL DEFAULT now()
+);
+
+-- Bookmark (post) ids already handled, imported or not, so they never come back as new.
+CREATE TABLE IF NOT EXISTS x_bookmark_seen (
+    tweet_id  text PRIMARY KEY,
+    save_id   uuid REFERENCES saves (id) ON DELETE SET NULL,  -- NULL = only marked as seen
+    seen_at   timestamptz NOT NULL DEFAULT now()
+);

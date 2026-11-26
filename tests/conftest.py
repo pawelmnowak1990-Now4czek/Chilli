@@ -19,6 +19,10 @@ from fastapi.testclient import TestClient
 os.environ.setdefault("MCP_SECRET", "testowy-sekret-mcp")
 # In tests the thread that polls RSS feeds does not start (network and Claude are replaced in tests).
 os.environ.setdefault("FEED_POLL_HOURS", "0")
+# The X bookmarks import is off in tests, even if a local .env turns it on; tests enable it per test.
+os.environ["X_CLIENT_ID"] = ""
+os.environ["X_CLIENT_SECRET"] = ""
+os.environ["X_BOOKMARKS_POLL_MINUTES"] = "0"
 
 from app.config import settings  # noqa: E402
 
@@ -46,7 +50,7 @@ def db_conn(database_url: str, monkeypatch: pytest.MonkeyPatch) -> Iterator[psyc
     """Connection with a clean saves table. Also sets the database address for the app code."""
     monkeypatch.setattr(settings, "database_url", database_url)
     with psycopg.connect(database_url, autocommit=True) as conn:
-        conn.execute("TRUNCATE saves, projects, feeds CASCADE")
+        conn.execute("TRUNCATE saves, projects, feeds, x_account, x_oauth_state, x_bookmark_seen CASCADE")
         yield conn
 
 
