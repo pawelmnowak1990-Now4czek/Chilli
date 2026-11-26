@@ -162,3 +162,25 @@ CREATE TABLE IF NOT EXISTS x_bookmark_seen (
     save_id   uuid REFERENCES saves (id) ON DELETE SET NULL,  -- NULL = only marked as seen
     seen_at   timestamptz NOT NULL DEFAULT now()
 );
+
+-- Knowledge gaps (app/gaps.py): what an AI assistant looked for in Chilli and did not find, or found
+-- wrong or out of date. Reported over MCP (report_gap); a new save close in meaning makes a gap a
+-- 'candidate', and the owner confirms it (resolve_gap). Nothing here costs a model call.
+CREATE TABLE IF NOT EXISTS knowledge_gaps (
+    id              serial PRIMARY KEY,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    question        text NOT NULL,                    -- what the assistant was looking for, one sentence
+    kind            text NOT NULL DEFAULT 'missing'
+                    CHECK (kind IN ('missing', 'wrong', 'stale')),
+    context         text NOT NULL DEFAULT '',         -- what task the assistant was doing
+    suggestion      text NOT NULL DEFAULT '',         -- optional: the correct fact or a source worth saving
+    save_id         uuid REFERENCES saves (id) ON DELETE SET NULL,          -- the wrong or stale save
+    project_id      integer REFERENCES projects (id) ON DELETE SET NULL,
+    embedding       vector(384),                      -- of the question: repeats and matching new saves
+    times_reported  integer NOT NULL DEFAULT 1,
+    status          text NOT NULL DEFAULT 'open'
+                    CHECK (status IN ('open', 'candidate', 'closed', 'dismissed')),
+    closed_by       uuid REFERENCES saves (id) ON DELETE SET NULL,          -- the save that may answer it
+    closed_at       timestamptz
+);
+CREATE INDEX IF NOT EXISTS knowledge_gaps_status_idx ON knowledge_gaps (status, created_at DESC);

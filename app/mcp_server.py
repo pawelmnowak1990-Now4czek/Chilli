@@ -17,7 +17,7 @@ from uuid import UUID
 import anyio
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
-from app import db, embeddings, feeds, language, processing, projects, recall, search
+from app import db, embeddings, feeds, gaps, language, processing, projects, recall, search
 from app.config import settings
 from app.mcp_auth import MCP_PATH, McpAuth
 from app.public_url import LOCAL_HOSTS, mcp_allowed_hosts, mcp_allowed_origins
@@ -39,7 +39,12 @@ Recall: from_archive gives forgotten but useful saves from 2-8 weeks ago; \
 remind_save sets a reminder about a save ("remind me in a week"), due_reminders shows the overdue ones.
 
 RSS feeds: add_feed subscribes to a feed, and its entries are rated against the projects; \
-feed_highlights gives entries rated 7+, save_feed_entry turns an entry into a regular save."""
+feed_highlights gives entries rated 7+, save_feed_entry turns an entry into a regular save.
+
+Knowledge gaps: when you look in Chilli for something {owner} could expect to be there and do not find it, \
+or find a save that is wrong or out of date, report it with report_gap (one sentence, what you looked for). \
+Do not fix or rewrite saves yourself. A later save that may answer a gap shows up in \
+list_gaps(status='candidate'); resolve_gap closes or dismisses a gap when {owner} says so."""
 
 
 def build_instructions(owner: str) -> str:
@@ -264,6 +269,66 @@ async def save_feed_entry(entry_id: int) -> dict[str, Any]:
     save_id = await anyio.to_thread.run_sync(run)
     threading.Thread(target=processing.process_save, args=(save_id,), daemon=True).start()
     return {"entry_id": entry_id, "save_id": str(save_id)}
+
+
+@server.tool()
+async def report_gap(
+    question: str,
+    kind: str = "missing",
+    context: str = "",
+    suggestion: str = "",
+    save_id: str | None = None,
+    project: str | None = None,
+) -> dict[str, Any]:
+    """Reports something you looked for in Chilli and did not find, or found wrong or out of date.
+    No model call; a question close to an open gap counts as a repeat (times_reported + 1).
+
+    question: what you were looking for, one sentence (max 500 characters).
+    kind: missing (not there), wrong (a save says something incorrect), stale (out of date).
+    context: optionally, what task you were doing.
+    suggestion: optionally, the correct fact or a source worth saving.
+    save_id: for wrong/stale, the save in question.
+    project: optionally, the project it concerns (name from list_projects).
+    """
+
+    def run() -> dict[str, Any]:
+        vector = embeddings.embed_query(question)
+        with db.connect() as conn:
+            return gaps.report_gap(conn, question, vector, kind, context, suggestion, save_id, project)
+
+    return await anyio.to_thread.run_sync(run)
+
+
+@server.tool()
+async def list_gaps(status: str | None = "open", project: str | None = None, limit: int = 20) -> list[dict[str, Any]]:
+    """Knowledge gaps, most often reported first.
+
+    status: open (waiting), candidate (a newer save may answer it: closed_by, closed_by_title),
+        closed, dismissed; null = all.
+    project: only gaps for this project.
+    limit: how many (default 20, max 100).
+    """
+
+    def run() -> list[dict[str, Any]]:
+        with db.connect() as conn:
+            return gaps.list_gaps(conn, status=status, project=project, limit=min(limit, 100))
+
+    return await anyio.to_thread.run_sync(run)
+
+
+@server.tool()
+async def resolve_gap(gap_id: int, status: str, save_id: str | None = None) -> dict[str, Any]:
+    """Changes a knowledge gap's status, when the owner says so.
+
+    status: closed (answered: by save_id, or by the candidate save already suggested),
+        dismissed (not worth filling), open (back on the list).
+    """
+
+    def run() -> dict[str, Any]:
+        with db.connect() as conn:
+            return gaps.resolve_gap(conn, gap_id, status, save_id)
+
+    return await anyio.to_thread.run_sync(run)
 
 
 def build_app() -> McpAuth:
