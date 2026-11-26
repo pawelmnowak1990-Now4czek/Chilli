@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     # open in the browser extension (app/related.py). Lower = fewer, but more accurate.
     related_max_distance: float = 0.15
 
+    # Largest cosine distance between a new save and an open knowledge gap (app/gaps.py) at which
+    # the save is offered as a possible answer. Same scale as related_max_distance (a question
+    # against a save), so the same tested value; lower = fewer, more accurate candidates.
+    gap_match_distance: float = 0.15
+
     # How often, in hours, the service fetches subscribed RSS feeds (app/feeds.py). 0 disables it.
     feed_poll_hours: float = 6
 

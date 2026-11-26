@@ -60,6 +60,7 @@ How structured output works with OpenAI-compatible servers, and what is untested
 | `MAX_UPLOAD_MB` | `15` | Largest accepted image. The web server allows 25 MB. |
 | `RELATED_MAX_DISTANCE` | `0.15` | Largest cosine distance at which a save counts as related to the page open in the extension. Lower = fewer, more accurate. |
 | `FEED_POLL_HOURS` | `6` | How often RSS feeds are fetched; `0` turns it off. |
+| `GAP_MATCH_DISTANCE` | `0.15` | Largest cosine distance at which a new save is offered as a possible answer to an open knowledge gap. Same scale as `RELATED_MAX_DISTANCE`. |
 
 ## X bookmarks import (optional)
 

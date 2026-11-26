@@ -4,7 +4,8 @@
   -> embedding -> database.
 - Link: fetch the page or X post content -> description from Claude -> embedding -> database.
 - Selected text (browser extension): description from Claude -> embedding -> database, without fetching the page.
-- At the end of each: usefulness rating for the owner's projects (app/relevance.py).
+- At the end of each: usefulness rating for the owner's projects (app/relevance.py), and a check whether
+  the save answers an open knowledge gap (app/gaps.py).
 
 Runs after the /capture response (the phone does not wait) and at service start for any backlog of saves.
 """
@@ -16,7 +17,7 @@ from urllib.parse import urlsplit
 from typing import Any
 from uuid import UUID
 
-from app import db, dedupe, embeddings, fetch, images, link_analysis, projects, relevance, saves, vision
+from app import db, dedupe, embeddings, fetch, gaps, images, link_analysis, projects, relevance, saves, vision
 from app.config import settings
 
 log = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ def process_save(
         log.info("processed save %s", save_id)
         _link_duplicates(save_id, embed)
         _rate_quietly(save_id, rate)
+        _match_gaps_quietly(save_id)
     except Exception as error:  # deliberately broad: every error must go to the database, not kill the thread
         log.exception("error processing save %s", save_id)
         try:
@@ -84,6 +86,18 @@ def _rate_quietly(save_id: UUID, rate: Rater) -> None:
         rate_and_store(save_id, rate)
     except Exception:
         log.exception("error rating usefulness for %s", save_id)
+
+
+def _match_gaps_quietly(save_id: UUID) -> None:
+    """Offers the new save as a possible answer to open knowledge gaps (app/gaps.py). Like rating,
+    an extra: its failure is only logged."""
+    try:
+        with db.connect() as conn:
+            matched = gaps.match_new_save(conn, save_id, settings.gap_match_distance)
+        if matched:
+            log.info("save %s may answer knowledge gaps %s", save_id, matched)
+    except Exception:
+        log.exception("error matching knowledge gaps for %s", save_id)
 
 
 def rate_and_store(save_id: UUID, rate: Rater = relevance.rate_save) -> bool:

@@ -14,7 +14,8 @@ from app.config import settings
 
 TOOLS = {"search_saves", "get_save", "list_recent", "set_status", "list_projects", "upsert_project", "top_saves",
          "from_archive", "remind_save", "due_reminders",
-         "add_feed", "list_feeds", "set_feed_active", "feed_highlights", "save_feed_entry"}
+         "add_feed", "list_feeds", "set_feed_active", "feed_highlights", "save_feed_entry",
+         "report_gap", "list_gaps", "resolve_gap"}
 
 HEADERS = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json"}
 
@@ -200,3 +201,23 @@ def test_kanaly_przez_mcp(mcp: TestClient, db_conn: psycopg.Connection) -> None:
     assert "Okna w SQL" in json.dumps(top, ensure_ascii=False)
     paused = call(mcp, "set_feed_active", {"url": "https://b.pl/rss", "active": False})
     assert paused.get("isError") is not True, paused
+
+
+# --- Knowledge gaps (stage 7) ---
+
+
+def test_braki_przez_mcp(mcp: TestClient, db_conn: psycopg.Connection, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(embeddings, "embed_query", lambda text: [1.0] + [0.0] * 383)
+    initialize(mcp)
+
+    reported = call(mcp, "report_gap", {"question": "Kiedy siać pomidory?", "context": "plan ogrodu"})
+    assert reported.get("isError") is not True, reported
+    assert "Kiedy siać pomidory?" in json.dumps(call(mcp, "list_gaps", {}), ensure_ascii=False)
+
+    gap_id = db_conn.execute("SELECT id FROM knowledge_gaps").fetchone()[0]
+    resolved = call(mcp, "resolve_gap", {"gap_id": gap_id, "status": "dismissed"})
+    assert resolved.get("isError") is not True, resolved
+    assert db_conn.execute("SELECT status FROM knowledge_gaps").fetchone()[0] == "dismissed"
+
+    bad = call(mcp, "report_gap", {"question": "q", "kind": "zły"})
+    assert bad.get("isError") is True

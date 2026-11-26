@@ -77,6 +77,7 @@ Read only:
 | `due_reminders(limit)` | Saves whose reminder date has come. |
 | `list_feeds()` | Subscribed RSS feeds with counts and the last fetch. |
 | `feed_highlights(days, min_score, limit)` | New RSS entries rated at least `min_score`, not saved yet. |
+| `list_gaps(status, project, limit)` | Knowledge gaps: what assistants looked for and did not find. `candidate` = a newer save may answer it. |
 
 Change something:
 
@@ -88,9 +89,17 @@ Change something:
 | `add_feed(url)` | Subscribe to an RSS/Atom feed; its entries get rated against your projects. |
 | `set_feed_active(url, active)` | Pause or resume a feed. |
 | `save_feed_entry(entry_id)` | Turn a feed entry into a regular save. |
+| `report_gap(question, kind, context, suggestion, save_id, project)` | Report something missing, wrong or out of date. Assistants call it on their own. |
+| `resolve_gap(gap_id, status, save_id)` | Close, dismiss or reopen a gap. |
 
 The status values are stored in Polish (`nowy`, `przejrzany`, `wykorzystany`, `archiwum`); the server
 instructions explain them to the model, so you can just say "mark it as used".
+
+Assistants report gaps on their own: when Claude looks in Chilli for something you could expect to be
+there and finds nothing (or finds a save that is wrong or out of date), it calls `report_gap`. No model
+is called for it. When you later save something close in meaning to an open gap, the gap becomes a
+`candidate`, and the daily digest asks you whether it is answered. Say "yes, close it" and the
+assistant calls `resolve_gap`. A gap is never closed without you.
 
 Start by describing your projects: "Add a Chilli project 'Garden' about growing vegetables on a balcony",
 then `python -m app.rerate --apply` on the server rates existing saves against it.

@@ -20,6 +20,8 @@ describes them, and your assistant finds them over MCP.
 - **Ratings per project.** Describe your projects once; every save gets a 1-10 usefulness score for each.
 - **Recall.** Forgotten but useful saves come back (`from_archive`), reminders when you ask for them,
   and a daily or weekly digest written by a scheduled task.
+- **Knowledge gaps.** When your assistant looks for something and Chilli has nothing, it reports the
+  gap (`report_gap`); the next save that answers it is pointed out in your digest.
 - **Bring your own model.** Anthropic, or any OpenAI-compatible API, including a local model in Ollama.
 - **Small to run.** One `docker compose` with Postgres on a small VPS or a home server.
 
@@ -88,7 +90,7 @@ iPhone Shortcut / browser extension
                           then: local embedding -> Postgres + pgvector -> rating per project
         ^
         |  MCP (Streamable HTTP), Authorization: Bearer <MCP_SECRET>
-AI clients: claude.ai, Claude Code, Cursor, ...   tools: search_saves, top_saves, from_archive, ...
+AI clients: claude.ai, Claude Code, Cursor, ...   tools: search_saves, top_saves, from_archive, report_gap, ...
 ```
 
 One service and one database in Docker Compose. The phone holds no logic: the Shortcuts only send
