@@ -19,8 +19,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 
 class HideSecretFilter(logging.Filter):
-    """Uvicorn logs the path of every request, including the old MCP address with the secret and
-    /x/connect?token=<capture token>. This filter replaces both with *** before the entry reaches the log."""
+    """Uvicorn logs the path of every request, including the old MCP address with the secret.
+    This filter replaces the secret with *** before the entry reaches the log, and the capture token
+    too, in case someone puts it into an address by hand (e.g. /x/connect?token=...)."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         secrets = [s for s in (settings.mcp_secret, settings.capture_token) if s]

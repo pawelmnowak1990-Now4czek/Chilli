@@ -52,8 +52,8 @@ def x_api(request: httpx.Request) -> httpx.Response:
 
 
 def start_connect(client: TestClient) -> dict[str, str]:
-    response = client.get(f"/x/connect?token={CAPTURE_TOKEN}", follow_redirects=False)
-    assert response.status_code == 302
+    response = client.post("/x/connect", data={"token": CAPTURE_TOKEN}, follow_redirects=False)
+    assert response.status_code == 303
     location = response.headers["location"]
     assert location.startswith(x_oauth.AUTHORIZE_URL + "?")
     assert response.headers["referrer-policy"] == "no-referrer"
@@ -61,18 +61,36 @@ def start_connect(client: TestClient) -> dict[str, str]:
 
 
 def test_disabled_without_client_id(client: TestClient) -> None:
-    assert client.get(f"/x/connect?token={CAPTURE_TOKEN}", follow_redirects=False).status_code == 404
+    assert client.get("/x/connect").status_code == 404
+    assert client.post("/x/connect", data={"token": CAPTURE_TOKEN}).status_code == 404
     assert client.get("/x/callback?state=a&code=b").status_code == 404
 
 
 def test_disabled_without_secret(client: TestClient, x_on: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "x_client_secret", "")
-    assert client.get(f"/x/connect?token={CAPTURE_TOKEN}", follow_redirects=False).status_code == 404
+    assert client.post("/x/connect", data={"token": CAPTURE_TOKEN}).status_code == 404
 
 
-def test_connect_needs_the_token(client: TestClient, x_on: None) -> None:
-    assert client.get("/x/connect", follow_redirects=False).status_code == 401
-    assert client.get("/x/connect?token=wrong", follow_redirects=False).status_code == 401
+def test_connect_page_shows_a_form_and_no_redirect(client: TestClient, x_on: None) -> None:
+    response = client.get("/x/connect", follow_redirects=False)
+    assert response.status_code == 200
+    assert "<form method=post" in response.text and "type=password" in response.text
+
+
+def test_connect_needs_the_right_token(client: TestClient, x_on: None, db_conn: psycopg.Connection) -> None:
+    response = client.post("/x/connect", data={"token": "wrong"}, follow_redirects=False)
+    assert response.status_code == 401
+    assert client.post("/x/connect", follow_redirects=False).status_code == 401
+    # A token in the address is not accepted: it would end up in web server logs.
+    assert client.get(f"/x/connect?token={CAPTURE_TOKEN}", follow_redirects=False).status_code == 200
+    assert db_conn.execute("SELECT count(*) FROM x_oauth_state").fetchone()[0] == 0
+
+
+def test_connect_without_capture_token_configured_503(
+    client: TestClient, x_on: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "capture_token", "")
+    assert client.post("/x/connect", data={"token": ""}).status_code == 503
 
 
 def test_connect_accepts_bearer_header(client: TestClient, x_on: None) -> None:
@@ -80,11 +98,12 @@ def test_connect_accepts_bearer_header(client: TestClient, x_on: None) -> None:
         "/x/connect", headers={"Authorization": f"Bearer {CAPTURE_TOKEN}"}, follow_redirects=False
     )
     assert response.status_code == 302
+    assert response.headers["location"].startswith(x_oauth.AUTHORIZE_URL)
 
 
 def test_connect_without_public_url_503(client: TestClient, x_on: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "public_url", "")
-    assert client.get(f"/x/connect?token={CAPTURE_TOKEN}", follow_redirects=False).status_code == 503
+    assert client.post("/x/connect", data={"token": CAPTURE_TOKEN}, follow_redirects=False).status_code == 503
 
 
 def test_connect_sends_pkce_and_stores_state(client: TestClient, x_on: None, db_conn: psycopg.Connection) -> None:

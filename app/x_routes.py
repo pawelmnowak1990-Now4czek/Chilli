@@ -1,13 +1,15 @@
-"""GET /x/connect and GET /x/callback: connecting the owner's X account for the bookmarks import.
+"""GET/POST /x/connect and GET /x/callback: connecting the owner's X account for the bookmarks import.
 
-/x/connect is opened in a browser, which cannot send an Authorization header, so it also accepts
-the capture token as `?token=`. The token is masked in the access log (app/main.py), and the
-redirect carries `Referrer-Policy: no-referrer` so the address with the token does not leak to X.
+/x/connect is opened in a browser, which cannot send an Authorization header. So GET shows a small
+form for the capture token and the form POSTs it in the request body. A body never reaches access
+logs (uvicorn, nginx, Caddy) or the browser history, which a `?token=` in the address would.
+A client that can send `Authorization: Bearer <capture token>` gets the redirect on GET directly.
+The redirect carries `Referrer-Policy: no-referrer`.
 
 /x/callback is called by X itself. It needs no token: it only works with a valid `state` that
 /x/connect handed out a few minutes earlier, once.
 
-With X_CLIENT_ID or X_CLIENT_SECRET empty both addresses answer 404, as if they did not exist.
+With X_CLIENT_ID or X_CLIENT_SECRET empty all three answer 404, as if they did not exist.
 """
 
 import hmac
@@ -15,8 +17,8 @@ import html
 import logging
 import secrets
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Form, Header, HTTPException, status
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from app import db, x_account, x_oauth
 from app.bearer import bearer_token
@@ -33,29 +35,37 @@ def require_enabled() -> None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not Found")
 
 
-def require_owner(
-    authorization: str | None = Header(default=None), token: str | None = Query(default=None)
-) -> None:
-    """The capture token from the Bearer header or from ?token=, compared in constant time."""
+def _is_owner(given: str | None) -> bool:
+    """The capture token, compared in constant time. Without CAPTURE_TOKEN nobody is the owner."""
     expected = settings.capture_token
     if not expected:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "CAPTURE_TOKEN is not set")
-    given = bearer_token(authorization) or (token.strip() if token else None)
-    if not given or not hmac.compare_digest(given.encode(), expected.encode()):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "add ?token=<CAPTURE_TOKEN> to the address")
+    return bool(given) and hmac.compare_digest(given.encode(), expected.encode())
 
 
-def _page(title: str, text: str, code: int = 200) -> HTMLResponse:
+def _page(title: str, text: str, code: int = 200, form: str = "") -> HTMLResponse:
+    """A minimal HTML page. `title` and `text` are escaped; `form` is our own fixed markup."""
     body = (
         "<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
         f"<title>Chilli: {html.escape(title)}</title>"
-        f"<h1>{html.escape(title)}</h1><p>{html.escape(text)}</p>"
+        f"<h1>{html.escape(title)}</h1><p>{html.escape(text)}</p>{form}"
     )
     return HTMLResponse(body, status_code=code, headers=NO_LEAK_HEADERS)
 
 
-@router.get("/x/connect", dependencies=[Depends(require_enabled), Depends(require_owner)])
-def connect() -> RedirectResponse:
+FORM = (
+    "<form method=post action=/x/connect>"
+    "<label>Capture token (CAPTURE_TOKEN from .env)<br>"
+    "<input type=password name=token autocomplete=off required size=40></label> "
+    "<button>Connect X</button></form>"
+)
+
+
+def _form(message: str, code: int = 200) -> HTMLResponse:
+    return _page("Connect X bookmarks", message, code, form=FORM)
+
+
+def _redirect_to_x(code: int) -> RedirectResponse:
     try:
         redirect = x_oauth.redirect_uri()
     except x_oauth.XAuthError as error:
@@ -65,7 +75,22 @@ def connect() -> RedirectResponse:
     with db.connect() as conn:
         x_account.store_state(conn, state, verifier)
     log.info("X connect started, callback %s", redirect)
-    return RedirectResponse(x_oauth.authorize_url(state, verifier), status_code=302, headers=NO_LEAK_HEADERS)
+    return RedirectResponse(x_oauth.authorize_url(state, verifier), status_code=code, headers=NO_LEAK_HEADERS)
+
+
+@router.get("/x/connect", dependencies=[Depends(require_enabled)])
+def connect_page(authorization: str | None = Header(default=None)) -> Response:
+    if _is_owner(bearer_token(authorization)):
+        return _redirect_to_x(302)
+    return _form("Chilli will send you to X to allow read access to your bookmarks.")
+
+
+@router.post("/x/connect", dependencies=[Depends(require_enabled)])
+def connect(token: str = Form(default="")) -> Response:
+    if not _is_owner(token.strip()):
+        return _form("Wrong token. Paste CAPTURE_TOKEN from the server's .env.", status.HTTP_401_UNAUTHORIZED)
+    # 303: the browser follows a redirect after a POST with a GET, as X expects.
+    return _redirect_to_x(303)
 
 
 @router.get("/x/callback", dependencies=[Depends(require_enabled)])
