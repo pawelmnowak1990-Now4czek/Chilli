@@ -1,0 +1,104 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Source of the Chrome Web Store images. Render: node render.js (in this folder). -->
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#23252b}
+body{background:#fff7ef;width:1280px;height:800px;position:relative}
+.bar{position:absolute;left:0;top:0;width:100%;height:10px;background:#e8492b}
+.copy{position:absolute;left:72px;top:0;bottom:0;width:380px;display:flex;flex-direction:column;justify-content:center}
+.copy img{width:72px;height:72px;margin-bottom:22px}
+.copy h1{font-size:42px;line-height:1.1;margin:0;letter-spacing:-1px}
+.copy p{font-size:21px;line-height:1.45;color:#6b6460;margin:18px 0 0}
+.win{position:absolute;left:500px;top:90px;width:720px;height:620px;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(80,40,20,.18);overflow:hidden;border:1px solid #eadfd5}
+.chrome{height:84px;background:#f1ece8;border-bottom:1px solid #e2d8cf}
+.tabs{height:38px;display:flex;align-items:flex-end;padding-left:80px;gap:4px}
+.dots{position:absolute;left:18px;top:14px;display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:50%;background:#e0d4c9;display:block}
+.tab{background:#fff;border-radius:9px 9px 0 0;padding:8px 16px;font-size:13px;width:250px;white-space:nowrap;overflow:hidden}
+.tab.off{background:transparent;color:#8b827c}
+.addr{height:46px;background:#fff;display:flex;align-items:center;padding:0 14px;gap:12px}
+.url{flex:1;background:#f1ece8;border-radius:999px;padding:7px 16px;font-size:14px;color:#5a4a40}
+.icon{position:relative;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+.icon img{width:20px;height:20px}
+.icon.hl{background:#fde4d9}
+.badge{position:absolute;right:-6px;bottom:-4px;font-size:11px;font-weight:700;color:#fff;border-radius:7px;padding:1px 5px;line-height:14px}
+.page{padding:28px 40px;font-size:15px;line-height:1.6;color:#3a3a3a}
+.page h2{font-size:26px;margin:0 0 10px;color:#23252b}
+.line{height:11px;background:#eee7e1;border-radius:6px;margin:12px 0}
+.sel{background:#cfe3ff;border-radius:3px;padding:1px 0}
+.menu{position:absolute;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:6px 0;font-size:14px;width:290px}
+.menu div{padding:7px 16px;display:flex;align-items:center;gap:10px}
+.menu div.on{background:#fde4d9}
+.menu img{width:16px;height:16px}
+.menu hr{border:0;border-top:1px solid #eee;margin:5px 0}
+.tip{position:absolute;background:#2c2c2c;color:#fff;font-size:13px;border-radius:6px;padding:8px 12px;line-height:1.5;white-space:nowrap}
+.list{padding:30px 44px;font-size:15px;line-height:1.5}
+.list h1{font-size:22px;margin:0 0 4px}.list .pg{color:#666;font-size:13px}
+.list h2{font-size:16px;margin:24px 0 6px}.list ul{margin:0;padding-left:22px}.list li{margin:10px 0}
+.list a{color:#1a5fd0;text-decoration:none}.list .meta{color:#666;font-size:13px}.list code{font-size:12px}
+.opts{padding:34px 60px;font-size:15px;line-height:1.5}
+.opts h1{font-size:22px;margin:0}.opts label{display:block;margin-top:18px;font-weight:600}
+.opts .in{border:1px solid #ccc;border-radius:4px;padding:8px;margin-top:4px;font-family:inherit}
+.opts .hint{color:#666;font-size:13px;margin-top:4px}
+.opts .chk{font-weight:400;display:flex;gap:8px;align-items:center}
+.opts .chk b{width:15px;height:15px;border-radius:3px;background:#1a73e8;display:inline-block}
+.opts button{margin-top:22px;margin-right:8px;padding:8px 16px;font:inherit;border:1px solid #bbb;border-radius:4px;background:#f6f6f6}
+.ok{color:#2e8b3c;margin-top:16px}
+/* small promo tile */
+body.tile{width:440px;height:280px}
+.t{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:22px}
+.t img{width:110px;height:110px}.t h1{font-size:50px;margin:0;letter-spacing:-2px;font-weight:800}.t h1 span{color:#e8492b}
+.t p{font-size:17px;margin:6px 0 0;color:#5a4a40;font-weight:600;line-height:1.3}
+</style></head><body>
+<div class="bar"></div>
+<script>
+const scene = new URLSearchParams(location.search).get("s") || "save";
+const logo = "../logo.svg";
+const shell = (tab, url, icon, inner) => `
+<div class="win"><div class="chrome"><div class="dots"><i></i><i></i><i></i></div>
+<div class="tabs"><div class="tab">${tab}</div><div class="tab off">New tab</div></div>
+<div class="addr"><div class="url">${url}</div>${icon}</div></div>${inner}</div>`;
+const copy = (h, p) => `<div class="copy"><img src="${logo}" alt=""><h1>${h}</h1><p>${p}</p></div>`;
+const article = `<div class="page"><h2>Window functions, explained with one sales table</h2>
+<div>A window function performs a calculation across a set of rows that are somehow related to the current row.
+<span class="sel">Unlike an aggregate, it does not collapse the rows into one: each row keeps its identity.</span></div>
+<div class="line" style="width:92%"></div><div class="line" style="width:84%"></div><div class="line" style="width:88%"></div>
+<div class="line" style="width:60%"></div><div class="line" style="width:90%"></div><div class="line" style="width:76%"></div></div>`;
+let html = "";
+if (scene === "save") {
+  html = copy("One click saves it", "Save the page, a link, the selected text or a screenshot of the tab. No folders, no tags: your own model describes it on your server.")
+   + shell("Window functions – PostgreSQL", "postgresql.org/docs/current/tutorial-window.html",
+     `<div class="icon hl"><img src="${logo}"><span class="badge" style="background:#2e8b3c">✓</span></div>`,
+     article + `<div class="menu" style="left:300px;top:250px">
+       <div>Copy</div><div>Search Google for “Unlike an aggregate…”</div><hr>
+       <div><img src="${logo}">Save page to Chilli</div>
+       <div class="on"><img src="${logo}">Save selection to Chilli</div>
+       <div><img src="${logo}">Save tab screenshot to Chilli</div>
+       <div><img src="${logo}">Related saves in Chilli</div></div>`);
+} else if (scene === "related") {
+  html = copy("You already have something on this", "Open a page and the icon shows how many related saves you have. Alt+Shift+R lists them, with links.")
+   + shell("Chilli: related saves", "chrome-extension://chilli/related.html",
+     `<div class="icon hl"><img src="${logo}"><span class="badge" style="background:#e8892b">3</span></div>`,
+     `<div class="list"><h1>What you already have in Chilli about this page</h1>
+      <div class="pg">Window functions, explained (postgresql.org/docs/current/tutorial-window.html)</div>
+      <h2>This page</h2><ul><li><a>Window functions, explained with one sales table</a><div class="meta">2026-11-24 · artykuł · <code>3f9c2a1e</code></div></li></ul>
+      <h2>Related</h2><ul>
+      <li><a>EXPLAIN ANALYZE cheat sheet: what to look at first</a><div class="meta">2026-11-21 · artykuł · <code>8d41b07c</code></div></li>
+      <li><a>Incremental models: only process new rows</a><div class="meta">2026-11-19 · artykuł · <code>c27e95f3</code></div></li>
+      <li><a>explain.dalibo.com: paste a plan, get a diagram</a><div class="meta">2026-11-16 · narzędzie · <code>51ab6d02</code></div></li></ul></div>`)
+;
+} else if (scene === "options") {
+  html = copy("Your server, your token", "The extension talks only to your own Chilli server. The token stays in this browser, and access is granted to that one address.")
+   + shell("Chilli: settings", "chrome-extension://chilli/options.html", `<div class="icon"><img src="${logo}"></div>`,
+     `<div class="opts"><h1>Chilli: settings</h1>
+      <label>Server address</label><div class="in">https://chilli.example.com</div>
+      <div class="hint">The PUBLIC_URL of your Chilli server. On Save, Chrome asks for access to this one address.</div>
+      <label>Token</label><div class="in">••••••••••••••••••••••••••••••••</div>
+      <div class="hint">CAPTURE_TOKEN from the .env file on the server, the same one as in the iPhone Shortcuts. It stays in this browser only.</div>
+      <label class="chk"><b></b> Show what I already have in Chilli about the open page</label>
+      <button>Save</button><button>Test connection</button><div class="ok">Connection and token work (click Save to keep them)</div></div>`);
+} else if (scene === "tile") {
+  document.body.className = "tile";
+  html = `<div class="t"><img src="${logo}" alt=""><div><h1>Chilli<span>.</span></h1><p>Save any page to your<br>own AI memory</p></div></div>`;
+}
+document.body.insertAdjacentHTML("beforeend", html);
+</script></body></html>

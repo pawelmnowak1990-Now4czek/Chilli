@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Chilli",
   "version": "0.3.0",
-  "description": "Saves the page, selected text or a tab screenshot to your Chilli knowledge base in one click, and shows what you have already saved about it.",
+  "description": "Save a page, selection or tab screenshot to your own Chilli knowledge base in one click, and see what you already saved about it.",
   "permissions": [
     "contextMenus",
     "activeTab",

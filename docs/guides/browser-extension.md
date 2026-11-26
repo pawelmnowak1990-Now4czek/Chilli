@@ -69,3 +69,4 @@ changes permissions, open the options and click **Save** once to grant access ag
   extensions to read the page: screenshots and selections may fail there.
 - Selections up to 200,000 characters are stored; the model reads the first 30,000.
 - Not in the Chrome Web Store yet: install from the folder as above. Safari is not supported yet.
+- Privacy: what the extension sends and stores is in [docs/extension-privacy.md](../extension-privacy.md).

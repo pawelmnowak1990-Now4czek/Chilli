@@ -19,3 +19,13 @@ it with **Load unpacked**; `manifest.json` must sit directly in the chosen folde
 
 Next: a Chrome Web Store listing (privacy policy, screenshots, permission justifications) and, later,
 a Safari build with `xcrun safari-web-extension-converter`.
+
+## Chrome Web Store package
+
+- `docs/extension-privacy.md`: the privacy policy the store requires (what is sent where, what is
+  stored, permissions), linked from the extension guide.
+- `docs/dev/chrome-web-store.md`: maintainer steps, listing texts, permission justifications and the
+  data-usage answers, ready to paste.
+- `docs/assets/store/`: three 1280×800 screenshots and the 440×280 promo tile, rendered from
+  `store.html` with `node render.js` (Playwright). They are illustrations of the real UI (same texts
+  as `options.html`, `related.html` and the menu items in `background.js`), not screen captures.
