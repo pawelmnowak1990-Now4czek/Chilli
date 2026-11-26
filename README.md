@@ -11,6 +11,12 @@ describes them, and your assistant finds them over MCP.
 
 <sub>An illustration of the flow, not a screen recording; the chat answers are what Chilli returns for its demo data. [Full video (MP4)](docs/assets/demo.mp4).</sub>
 
+> **New to servers? You do not need to be technical.**
+> [Step-by-step install guide](docs/guides/beginners.md): rent a small server, point a domain at it,
+> run one installer, add the iPhone button and connect your AI app, in about an hour.
+> Or [let an AI assistant guide you](docs/guides/install-with-ai.md): paste one prompt into Claude,
+> ChatGPT or Gemini and it walks you through every step.
+
 ## Why Chilli
 
 - **One-button capture.** The iPhone Action Button saves a screenshot; the share sheet saves a link;
