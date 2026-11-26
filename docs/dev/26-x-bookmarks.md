@@ -14,8 +14,9 @@ Opt-in import of the owner's X bookmarks through the official X API v2. User gui
   - `x_oauth_state`: single-use states with the PKCE verifier, valid 10 minutes (`DELETE ... RETURNING`);
   - `x_bookmark_seen`: every handled post id, with the save it became (or NULL = only marked as seen).
 - `app/x_routes.py`: `GET /x/connect` shows a form for the capture token, `POST /x/connect` checks it
-  and redirects to X (303). A browser cannot send a Bearer header and a `?token=` would be written
-  to the nginx/Caddy access logs, so the token goes in the form body. A Bearer header on GET still
+  and redirects to X (303). A browser cannot send a Bearer header, and a `?token=` would be written
+  to the access log of the nginx site (`deploy/nginx/chilli.conf.template` logs every path except `/mcp`)
+  and to the browser history, so the token goes in the form body. A Bearer header on GET still
   redirects directly. `GET /x/callback` validates the state, exchanges the code, stores the account.
   All three answer 404 while `X_CLIENT_ID` or `X_CLIENT_SECRET` is empty. The router is always
   attached (the settings can change in tests after `app.main` is imported); a dependency gates it.
@@ -26,10 +27,14 @@ Opt-in import of the owner's X bookmarks through the official X API v2. User gui
   2. reads bookmarks with `expansions=author_id&user.fields=username`;
   3. first sync without backfill: one page of 100 is marked as seen, nothing imported;
      first sync with backfill: pages of 100 until the last one (seen posts skipped), and
-     `first_sync_done` only when the last page was read, so an interrupted backfill resumes;
+     `first_sync_done` only when the last page (or the page cap) was reached, so an interrupted backfill resumes;
      normal poll: pages of 20, stops at the first seen post, at most 5 pages;
   4. imports new posts oldest first, one transaction per post (save + seen mark), and only then runs
      the ordinary processing (`processing.process_save`) for each new save.
+  An error on a later page keeps the pages already read in a backfill (they are paid for; the next
+  run skips them as seen), but imports nothing in a normal poll: saving only the newest posts would
+  leave a gap that the stop-at-seen rule never comes back to. A backfill that reaches the page cap
+  (10 pages) counts as done instead of re-reading 1000 posts on every poll.
   402, 429, 401/403 and `invalid_grant` give one log line without tokens, stored in `x_account.error`;
   the thread keeps running.
 - The access log filter in `app/main.py` now also masks `CAPTURE_TOKEN`, in case it is typed into an address.

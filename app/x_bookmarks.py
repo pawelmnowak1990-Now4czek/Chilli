@@ -137,38 +137,52 @@ def _refresh(client: httpx.Client, account: x_account.Account) -> str:
     return tokens.access_token
 
 
+@dataclass
+class ReadResult:
+    new: list[Bookmark]               # new bookmarks, newest first
+    finished: bool                    # the end of the list (or a seen post) was reached
+    token: str                        # the access token in use (it can change after a 401)
+    error: XApiError | None = None    # X failed on a later page; `new` holds what came before
+
+
 def _read_new(
     client: httpx.Client, account: x_account.Account, token: str, page_size: int, max_pages: int, stop_at_seen: bool
-) -> tuple[list[Bookmark], bool, str]:
+) -> ReadResult:
     """Reads bookmarks page by page, newest first.
 
     stop_at_seen=True (a normal poll): stops at the first post seen before.
     stop_at_seen=False (backfill): skips seen posts and reads on to the last page.
-    Returns (new bookmarks newest first, whether the end of the list was reached, the access token used).
     A 401 gets one refresh and a retry: the token can die before its expiry time (e.g. revoked and reconnected).
+    An error on the first page is raised; on a later page it is returned with the pages read so far,
+    because those reads are already paid for and a backfill can keep them.
     """
     new: list[Bookmark] = []
     pagination_token: str | None = None
     refreshed = False
-    for _ in range(max_pages):
+    for page_number in range(max_pages):
         try:
-            page, pagination_token = _get_page(client, token, account.user_id, page_size, pagination_token)
+            try:
+                page, pagination_token = _get_page(client, token, account.user_id, page_size, pagination_token)
+            except XApiError as error:
+                if error.status != 401 or refreshed:
+                    raise
+                refreshed = True
+                token = _refresh(client, account)
+                page, pagination_token = _get_page(client, token, account.user_id, page_size, pagination_token)
         except XApiError as error:
-            if error.status != 401 or refreshed:
+            if page_number == 0:
                 raise
-            refreshed = True
-            token = _refresh(client, account)
-            page, pagination_token = _get_page(client, token, account.user_id, page_size, pagination_token)
+            return ReadResult(new, False, token, error)
         with db.connect() as conn:
             for bookmark in page:
                 if x_account.is_seen(conn, bookmark.tweet_id):
                     if stop_at_seen:
-                        return new, True, token
+                        return ReadResult(new, True, token)
                     continue
                 new.append(bookmark)
         if not pagination_token:
-            return new, True, token
-    return new, False, token
+            return ReadResult(new, True, token)
+    return ReadResult(new, False, token)
 
 
 def _import(bookmarks: list[Bookmark], process: Processor) -> list[UUID]:
@@ -211,21 +225,26 @@ def sync_once(client: httpx.Client, process: Processor = processing.process_save
         token = _access_token(client, account)
         if first_sync and not settings.x_bookmarks_backfill:
             # Start from now: what is bookmarked today is only remembered as seen.
-            bookmarks, _, token = _read_new(client, account, token, FULL_PAGE_SIZE, 1, stop_at_seen=False)
-            result.marked_seen = _mark_all_seen(bookmarks)
+            read = _read_new(client, account, token, FULL_PAGE_SIZE, 1, stop_at_seen=False)
+            result.marked_seen = _mark_all_seen(read.new)
             first_sync_done = True
         elif first_sync:
-            bookmarks, finished, token = _read_new(
-                client, account, token, FULL_PAGE_SIZE, BACKFILL_MAX_PAGES, stop_at_seen=False
-            )
-            result.imported = _import(bookmarks, process)
-            # Done only when the last page was read; otherwise the next run goes on (seen posts are skipped).
-            first_sync_done = finished
+            read = _read_new(client, account, token, FULL_PAGE_SIZE, BACKFILL_MAX_PAGES, stop_at_seen=False)
+            # Pages read before an error are kept: the backfill skips them as seen next time.
+            result.imported = _import(read.new, process)
+            if read.error is not None:
+                raise read.error  # first_sync_done stays false, so the next run goes on
+            if not read.finished:
+                # More pages than X normally keeps. Stop here instead of re-reading them on every poll.
+                log.warning("X bookmarks: backfill stopped after %d pages", BACKFILL_MAX_PAGES)
+            first_sync_done = True
         else:
-            bookmarks, _, token = _read_new(
-                client, account, token, NORMAL_PAGE_SIZE, NORMAL_MAX_PAGES, stop_at_seen=True
-            )
-            result.imported = _import(bookmarks, process)
+            read = _read_new(client, account, token, NORMAL_PAGE_SIZE, NORMAL_MAX_PAGES, stop_at_seen=True)
+            if read.error is not None:
+                # Not imported: saving the newest posts without the older ones below them would mark the
+                # newest as seen, and the next poll would stop there and never reach the rest.
+                raise read.error
+            result.imported = _import(read.new, process)
     except XApiError as error:
         result.error = str(error)
     except x_oauth.XAuthError as error:

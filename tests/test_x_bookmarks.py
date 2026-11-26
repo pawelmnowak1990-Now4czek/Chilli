@@ -162,17 +162,42 @@ def test_backfill_pages_through_everything(db_conn: psycopg.Connection, monkeypa
     assert x_account.get_account(db_conn).first_sync_done is True
 
 
-def test_backfill_interrupted_resumes_next_time(db_conn: psycopg.Connection, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_backfill_interrupted_keeps_what_it_read_and_resumes(
+    db_conn: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(settings, "x_bookmarks_backfill", True)
     connect(db_conn, first_sync_done=False)
-    result, _ = run(FakeX({None: page(["4", "3"], next_token="p2"), "p2": httpx.Response(429)}))
-    assert "429" in (result.error or "")
+    result, _ = run(FakeX({None: page(["4", "3"], next_token="p2"), "p2": httpx.Response(402)}))
+    assert "402" in (result.error or "")
+    assert len(result.imported) == 2  # page 1 was paid for: it is kept
     assert x_account.get_account(db_conn).first_sync_done is False
-    assert urls(db_conn) == []  # nothing half-done: the next run reads it all again
 
     result, _ = run(FakeX({None: page(["4", "3"], next_token="p2"), "p2": page(["2", "1"])}))
-    assert len(result.imported) == 4
+    assert len(result.imported) == 2  # only the rest; 4 and 3 are skipped as seen
+    assert len(urls(db_conn)) == 4
     assert x_account.get_account(db_conn).first_sync_done is True
+
+
+def test_backfill_page_cap_ends_the_first_sync(db_conn: psycopg.Connection, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "x_bookmarks_backfill", True)
+    connect(db_conn, first_sync_done=False)
+    # Every page points to another one: without the cap this would never end.
+    pages = {None: page(["p0"], next_token="t1")}
+    for n in range(1, 20):
+        pages[f"t{n}"] = page([str(1000 - n)], next_token=f"t{n + 1}")
+    pages[None] = page(["1000"], next_token="t1")
+    fake = FakeX(pages)
+    run(fake)
+    assert len(fake.bookmark_requests()) == x_bookmarks.BACKFILL_MAX_PAGES
+    assert x_account.get_account(db_conn).first_sync_done is True
+
+
+def test_normal_poll_error_on_a_later_page_imports_nothing(db_conn: psycopg.Connection) -> None:
+    connect(db_conn)
+    fake = FakeX({None: page([str(n) for n in range(40, 20, -1)], next_token="p2"), "p2": httpx.Response(429)})
+    result, _ = run(fake)
+    assert "429" in (result.error or "")
+    assert urls(db_conn) == []  # all or nothing: a gap below the newest posts would never be filled
 
 
 def test_expired_token_is_refreshed_and_rotation_stored(db_conn: psycopg.Connection) -> None:
@@ -269,3 +294,20 @@ def test_no_poller_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "x_bookmarks_poll_minutes", 0)
     x_bookmarks.start_background_polling()
     assert started == []
+
+
+def test_poller_starts_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    started: list[dict] = []
+
+    class FakeThread:
+        def __init__(self, **kwargs: object) -> None:
+            started.append(kwargs)
+
+        def start(self) -> None:
+            pass
+
+    monkeypatch.setattr(x_bookmarks.threading, "Thread", FakeThread)
+    monkeypatch.setattr(settings, "x_bookmarks_poll_minutes", 15)
+    x_bookmarks.start_background_polling()
+    assert len(started) == 1
+    assert started[0]["args"] == (900,)

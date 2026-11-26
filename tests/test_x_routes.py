@@ -195,3 +195,17 @@ def test_capture_token_is_masked_in_the_access_log(client: TestClient) -> None:
     main.HideSecretFilter().filter(record)
     assert CAPTURE_TOKEN not in record.getMessage()
     assert json.dumps(record.args).count("***") == 1
+
+
+def test_callback_survives_x_timeout(
+    client: TestClient, x_on: None, db_conn: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    query = start_connect(client)
+
+    def timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectTimeout("no answer", request=request)
+
+    fake_x(monkeypatch, timeout)
+    response = client.get(f"/x/callback?state={query['state']}&code=c")
+    assert response.status_code == 502
+    assert x_account.get_account(db_conn) is None

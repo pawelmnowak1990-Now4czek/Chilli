@@ -17,6 +17,7 @@ import html
 import logging
 import secrets
 
+import httpx
 from fastapi import APIRouter, Depends, Form, Header, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
@@ -113,6 +114,10 @@ def callback(
     except x_oauth.XAuthError as failure:
         log.warning("X connect failed: %s", failure)
         return _page("X not connected", f"{failure}. Open /x/connect to try again.", 502)
+    except (httpx.HTTPError, KeyError, ValueError) as failure:
+        # X did not answer, or answered something unexpected. The type is enough; no token in the log.
+        log.warning("X connect failed: %s", type(failure).__name__)
+        return _page("X not connected", "X did not answer as expected. Open /x/connect to try again.", 502)
     with db.connect() as conn:
         x_account.save_account(conn, user_id, username, tokens)
     log.info("X account connected (@%s)", username)
