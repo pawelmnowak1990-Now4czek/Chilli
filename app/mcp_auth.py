@@ -16,6 +16,7 @@ import hmac
 import json
 from typing import Any, Awaitable, Callable
 
+from app.bearer import bearer_token
 from app.config import settings
 
 # Types from ASGI (the standard that Starlette and FastAPI are built on): `scope` describes the request,
@@ -63,11 +64,12 @@ def _has_valid_secret(scope: Scope, secret: str) -> bool:
     # Headers in ASGI are a list of byte pairs with lowercase names.
     headers = dict(scope.get("headers", []))
     value = headers.get(b"authorization", b"").decode("latin-1")
-    prefix = "Bearer "
-    if not value.startswith(prefix):
+    # "Bearer <secret>", forgiving about the letter case of "Bearer" and spaces around the secret.
+    given = bearer_token(value)
+    if given is None:
         return False
     # compare_digest: constant-time comparison, like for the /capture token (app/auth.py).
-    return hmac.compare_digest(value.removeprefix(prefix).encode(), secret.encode())
+    return hmac.compare_digest(given.encode(), secret.encode())
 
 
 async def _reject(send: Send) -> None:

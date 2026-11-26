@@ -46,7 +46,7 @@ It then:
 1. generates `POSTGRES_PASSWORD`, `CAPTURE_TOKEN` and `MCP_SECRET` (64 hex characters each),
 2. writes `.env` with mode 600 (only your user can read it),
 3. starts the containers (`docker compose up -d --build`; the first build takes a few minutes),
-4. runs `python -m app.doctor` (up to six times while the service starts),
+4. waits until the service answers (up to a minute), then runs `python -m app.doctor` once,
 5. prints the capture URL and token and the MCP URL and header. **Copy them now**; they are not shown again
    (they stay in `.env`).
 

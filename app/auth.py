@@ -4,6 +4,7 @@ import hmac
 
 from fastapi import Header, HTTPException, status
 
+from app.bearer import bearer_token
 from app.config import settings
 
 
@@ -16,11 +17,11 @@ def require_capture_token(authorization: str | None = Header(default=None)) -> N
         # An empty token in .env is a configuration error. We reject everything instead of letting everyone in.
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "CAPTURE_TOKEN is not set")
 
-    prefix = "Bearer "
-    if authorization is None or not authorization.startswith(prefix):
+    # "Bearer <token>", forgiving about the letter case of "Bearer" and spaces around the token.
+    given = bearer_token(authorization)
+    if given is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing token")
 
-    given = authorization.removeprefix(prefix)
     # compare_digest compares in constant time: from the response time you cannot guess
     # the token character by character, as you could with a plain `==`.
     if not hmac.compare_digest(given.encode(), expected.encode()):

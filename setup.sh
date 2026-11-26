@@ -258,18 +258,27 @@ if [ "$START" -eq 1 ]; then
     else
         docker compose up -d --build
     fi
+    # Wait until the service answers inside its container (port 8000 there, whatever CHILLI_PORT is).
+    # Only startup is worth waiting for; a problem the doctor finds (e.g. a wrong API key) is not.
     echo
-    echo "Checking the installation..."
-    ok=0
-    for attempt in 1 2 3 4 5 6; do
-        if docker compose exec -T api python -m app.doctor; then
-            ok=1
+    echo "Waiting for the service to start..."
+    ready=0
+    for attempt in $(seq 1 30); do
+        if docker compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
+            ready=1
             break
         fi
-        echo "(the service may still be starting, retrying in 10 s)"
-        sleep 10
+        sleep 2
     done
-    [ "$ok" -eq 1 ] || echo "The doctor found problems; see above. Run it again with: docker compose exec api python -m app.doctor"
+    if [ "$ready" -eq 0 ]; then
+        echo "The service did not answer within a minute. See what happened with: docker compose logs --tail 50 api"
+    else
+        echo "Checking the installation..."
+        if ! docker compose exec -T api python -m app.doctor; then
+            echo "The doctor found problems (see above). Fix them in .env, then run:"
+            echo "  docker compose up -d && docker compose exec api python -m app.doctor"
+        fi
+    fi
 fi
 
 # --- what next -------------------------------------------------------------------------------

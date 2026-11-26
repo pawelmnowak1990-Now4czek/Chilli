@@ -34,7 +34,11 @@ def stub_bin(tmp_path: Path) -> Path:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     stub = bin_dir / "docker"
-    stub.write_text(f'#!/bin/sh\necho "$@" >> "{tmp_path}/docker.log"\nexit 0\n')
+    # STUB_DOCTOR_EXIT makes `... python -m app.doctor` fail, like a doctor that found a problem.
+    stub.write_text(
+        f'#!/bin/sh\necho "$@" >> "{tmp_path}/docker.log"\n'
+        'case "$*" in *app.doctor*) exit "${STUB_DOCTOR_EXIT:-0}" ;; esac\nexit 0\n'
+    )
     stub.chmod(0o755)
     return bin_dir
 
@@ -242,3 +246,21 @@ def test_caddy_ignores_the_port(tmp_path: Path, stub_bin: Path) -> None:
     result = run(tmp_path, stub_bin, "--no-start", CHILLI_PORT="8001")
     assert result.returncode == 0, result.stderr
     assert "CHILLI_PORT" not in env_lines(tmp_path / ".env")
+
+
+def test_waits_for_the_service_then_runs_the_doctor_once(tmp_path: Path, stub_bin: Path) -> None:
+    result = run(tmp_path, stub_bin)
+    assert result.returncode == 0, result.stderr
+    calls = docker_calls(stub_bin)
+    health = [i for i, c in enumerate(calls) if "/health" in c]
+    doctor = [i for i, c in enumerate(calls) if "app.doctor" in c]
+    assert health and doctor == [health[-1] + 1]  # readiness check first, then the doctor
+
+
+def test_doctor_problems_are_reported_once_without_retries(tmp_path: Path, stub_bin: Path) -> None:
+    """A problem the doctor finds (e.g. a wrong API key) does not go away by waiting."""
+    result = run(tmp_path, stub_bin, STUB_DOCTOR_EXIT="1")
+    assert result.returncode == 0, result.stderr  # the tokens are still printed at the end
+    assert sum("app.doctor" in c for c in docker_calls(stub_bin)) == 1
+    assert "The doctor found problems" in result.stdout
+    assert "Capture token" in result.stdout
