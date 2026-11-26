@@ -20,6 +20,8 @@ describes them, and your assistant finds them over MCP.
 - **Ratings per project.** Describe your projects once; every save gets a 1-10 usefulness score for each.
 - **Recall.** Forgotten but useful saves come back (`from_archive`), reminders when you ask for them,
   and a daily or weekly digest written by a scheduled task.
+- **Your X bookmarks, automatically (optional).** Connect your X account once and every post you bookmark
+  on X becomes a save, through the official X API and your own developer app (typically under $1 a month).
 - **Bring your own model.** Anthropic, or any OpenAI-compatible API, including a local model in Ollama.
 - **Small to run.** One `docker compose` with Postgres on a small VPS or a home server.
 
@@ -42,6 +44,8 @@ Try it with demo data first: `docker compose exec api python -m app.demo_seed --
 - Embeddings are computed locally; search needs no API.
 - To read a saved link, the server fetches that page from its site; posts on X go through the public
   fxtwitter API.
+- With the X bookmarks import on, Chilli reads only your bookmarks, using your own X app's keys; the X
+  access tokens stay in your database and are never logged.
 - No telemetry: nothing is sent to the authors.
 
 ## Status
@@ -61,6 +65,8 @@ License: MIT, see [LICENSE](LICENSE).
 - Hybrid search (full-text plus semantic, with a local embedding model that needs no API).
 - Duplicate merging (a screenshot and a link of the same page become one finding).
 - Usefulness rating per project, "from the archive" recall, reminders, RSS subscriptions rated by project.
+- X bookmarks import (optional): new bookmarks are fetched every 30 minutes and saved like a shared link;
+  OAuth 2.0 with your own X app, off unless configured. Guide: [docs/guides/x-bookmarks.md](docs/guides/x-bookmarks.md).
 - "You already have something on this": the browser extension shows related saves for the page you are on.
 - Markdown and JSON export (`python -m app.export`), daily backups (`deploy/backup.sh`).
 - Any model: Claude, or any OpenAI-compatible API (OpenAI, OpenRouter, Gemini, Ollama, LM Studio, vLLM).
