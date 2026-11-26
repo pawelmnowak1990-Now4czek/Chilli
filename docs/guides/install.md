@@ -1,5 +1,8 @@
 # Install, update, back up
 
+New to servers? Start with [beginners.md](beginners.md) (every step from renting a server to the
+AI connector) or [install-with-ai.md](install-with-ai.md) (a prompt that lets an assistant guide you).
+
 ## Before you start
 
 - A server with Docker and the Docker Compose plugin

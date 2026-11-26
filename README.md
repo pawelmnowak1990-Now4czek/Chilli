@@ -33,6 +33,8 @@ describes them, and your assistant finds them over MCP.
 3. Add the [iPhone Shortcut](docs/guides/ios-shortcuts.md) and the [connector in your AI client](docs/guides/mcp-clients.md).
 
 Details, nginx instead of Caddy, updates and backups: [docs/guides/install.md](docs/guides/install.md).
+Never rented a server? [Step-by-step guide for non-technical people](docs/guides/beginners.md), or
+[let an AI assistant guide you](docs/guides/install-with-ai.md) with a ready-to-paste prompt.
 Try it with demo data first: `docker compose exec api python -m app.demo_seed --apply`
 ([more](docs/guides/install.md#try-it-with-demo-data)).
 
@@ -114,6 +116,8 @@ Reports of what works are welcome. Details: [docs/guides/configuration.md](docs/
 
 ## Guides
 
+- [Install without being technical: server, domain, phone, AI app](docs/guides/beginners.md)
+- [Install with an AI assistant (ready-to-paste prompt)](docs/guides/install-with-ai.md)
 - [Install, update, back up](docs/guides/install.md)
 - [Configuration: every `.env` variable](docs/guides/configuration.md)
 - [iPhone Shortcuts](docs/guides/ios-shortcuts.md)
