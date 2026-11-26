@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/logo.svg" width="120" alt="Chilli logo: a smiling chili pepper"></p>
+
 # Chilli
 
 **Press the Action Button. Your AI remembers it.**

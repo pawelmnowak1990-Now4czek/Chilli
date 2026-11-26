@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="116" fill="#fff1e3"/>
+  <!-- a relaxed chili pepper: Chilli = "chill out", it remembers for you -->
+  <path d="M128 196 C104 274, 140 358, 226 398 C292 428, 372 420, 414 364 C380 376, 334 372, 300 350 C254 320, 244 266, 258 206 C266 168, 238 136, 196 138 C164 140, 138 162, 128 196 Z" fill="#e8492b"/>
+  <path d="M152 214 C146 262, 160 300, 188 330" stroke="#ff8a6e" stroke-width="14" fill="none" stroke-linecap="round" opacity=".7"/>
+  <!-- stem and cap -->
+  <path d="M196 144 C196 112, 216 90, 252 82" stroke="#3d8b5a" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="M144 166 C162 134, 230 128, 254 166 C226 184, 172 188, 144 166 Z" fill="#3d8b5a"/>
+  <!-- closed eyes and a calm smile -->
+  <path d="M168 240 Q182 226 196 240 M216 236 Q230 222 244 236" stroke="#5a1a10" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M186 270 Q206 286 226 268" stroke="#5a1a10" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="166" cy="262" r="9" fill="#ff8a6e" opacity=".8"/><circle cx="250" cy="256" r="9" fill="#ff8a6e" opacity=".8"/>
+</svg>
