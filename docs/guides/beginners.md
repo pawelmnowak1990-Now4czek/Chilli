@@ -10,7 +10,8 @@ ChatGPT or another assistant, and it walks you through these same steps one at a
 
 - A small rented computer on the internet (a **server**, often called a VPS) that runs Chilli all the time.
 - Your own web address for it, for example `chilli.yourname.com`.
-- A button on your iPhone that sends a screenshot there, and a "Chilli" entry in the share sheet for links.
+- A button on your iPhone that sends a screenshot there, and a "Chilli" entry in the share sheet for links
+  (on Android: "Chilli" entries in the share sheet for screenshots and links).
 - Claude (or another AI app) that can search everything you saved.
 
 ## What you need
@@ -20,7 +21,7 @@ ChatGPT or another assistant, and it walks you through these same steps one at a
 | A server (VPS) with 2 vCPU and 4 GB RAM, Ubuntu 24.04 | about 4-8 EUR / USD a month | Any provider works: Hetzner, DigitalOcean, OVH, Vultr, Linode... 2 GB RAM also works with swap (step 4). |
 | A domain name | about 10-15 EUR / USD a year | Bought from any registrar (Cloudflare, Namecheap, OVH, IONOS, Porkbun...). A subdomain of a domain you already own is fine and free. |
 | An API key for the AI model | pay per use | For Claude: an account at [console.anthropic.com](https://console.anthropic.com). Set a monthly spend limit there. |
-| An iPhone with the Shortcuts app | | Android has no ready-made guide yet; the browser extension works in Chrome, Edge, Brave, Arc and Dia on any computer. |
+| A phone: an iPhone with the Shortcuts app, or an Android phone | free | Android uses the free HTTP Shortcuts app ([android.md](android.md)). The browser extension works in Chrome, Edge, Brave, Arc and Dia on any computer. |
 | A computer with a terminal | free | Mac: the **Terminal** app. Windows: **PowerShell** or **Windows Terminal**. |
 
 Keep a password manager or a private note open. During the install you will get three secret values
@@ -144,7 +145,7 @@ The installer asks a few questions. Press Enter to accept the suggestion in brac
 The first start downloads and builds everything and takes 3-10 minutes. At the end the installer
 checks itself (lines with `OK`; a `WARN` is not fatal) and prints four values:
 
-- **Capture URL** and **Capture token**: for the iPhone and the browser extension.
+- **Capture URL** and **Capture token**: for the phone and the browser extension.
 - **MCP URL** and **MCP header**: for Claude and other AI apps.
 
 **Copy all four into your password manager now.** They are not shown again. (They are kept in the
@@ -153,13 +154,17 @@ file `/opt/chilli/.env` on the server; `grep TOKEN /opt/chilli/.env` shows the t
 Check from your own computer's browser: open `https://chilli.yourdomain.com/health`. You should see a
 short text with `"status":"ok"`. A padlock in the address bar means HTTPS works.
 
-## Step 8. The iPhone button
+## Step 8. The phone button
 
 Follow [ios-shortcuts.md](ios-shortcuts.md). In short, you build two Shortcuts in the Shortcuts app
 (about five minutes), paste the capture URL and the token into them, and put the first one on the
 Action Button (or on Back Tap: double-tap the back of the phone).
 
 Test it: open any page, press the button, and wait for the "Saved to Chilli" notification.
+
+**Android:** follow [android.md](android.md) instead. You set up the free HTTP Shortcuts app (about
+ten minutes), and then save with **Share** → **Chilli: screenshot** on the screenshot preview, or
+**Share** → **Chilli: link** in any app.
 
 ## Step 9. Connect Claude
 
@@ -216,6 +221,7 @@ cd /opt/chilli && git pull && docker compose up -d --build
 | `getent` prints nothing | The DNS record is missing, has a typo, or has not spread yet. Wait and check step 2. |
 | `/health` does not open, or the browser warns about the certificate | The domain did not point at the server when Chilli started. Fix DNS, then run `cd /opt/chilli && docker compose restart caddy`. |
 | The iPhone shows an alert instead of "Saved to Chilli" | Read the message: usually a mistyped token in the Shortcut. See the troubleshooting list in [ios-shortcuts.md](ios-shortcuts.md#troubleshooting). |
+| Android shows an error instead of "Saved to Chilli" | Read the message: usually the token in the header. See the troubleshooting list in [android.md](android.md#troubleshooting). |
 | A save never gets a title | The model key or its credit. Run `cd /opt/chilli && docker compose exec api python -m app.doctor` and read the `FAIL` lines. |
 | A secret ended up in a chat or screenshot | Replace it: see the top of [configuration.md](configuration.md). |
 

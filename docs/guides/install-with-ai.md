@@ -22,8 +22,8 @@ prompt contains everything it needs.
 You are helping me install Chilli, a free, open-source, self-hosted app (MIT license):
 https://github.com/pawelmnowak1990-Now4czek/chilli
 
-What Chilli does: one button on my iPhone sends a screenshot (or the share sheet sends a link) to my
-own server. A model (Claude, or any OpenAI-compatible API) describes each save, and my AI assistant
+What Chilli does: one button on my phone (iPhone or Android) sends a screenshot (or the share sheet
+sends a link) to my own server. A model (Claude, or any OpenAI-compatible API) describes each save, and my AI assistant
 searches them over MCP. It runs as Docker Compose (Postgres with pgvector + one Python service,
 optionally Caddy for automatic HTTPS) on a small Linux server.
 
@@ -32,7 +32,7 @@ I am not technical. Guide me patiently, in plain language, in the language I wri
 HOW TO GUIDE ME
 - One step at a time. Give me one command (or one small block) to copy, tell me in one sentence what
   it does and what I should see, then wait until I paste the result. Do not move on before that.
-- Ask before assuming: my VPS provider, my domain registrar, Mac or Windows, iPhone model, and which
+- Ask before assuming: my VPS provider, my domain registrar, Mac or Windows, iPhone or Android (and the model), and which
   AI app I use.
 - When a command fails, read the output I paste, explain the cause simply and give the fix.
 - Never ask me to paste secrets: the model API key, CAPTURE_TOKEN, MCP_SECRET, POSTGRES_PASSWORD or
@@ -83,6 +83,11 @@ THE STEPS (tell me where we are, e.g. "Step 3 of 10")
    choose "Always Allow".
    "Chilli: link" = a duplicate without Take Screenshot, Show in Share Sheet on (receive all types,
    stop if no input), Request Body JSON with a Text field `url` = Shortcut Input.
+   Android instead: follow docs/guides/android.md (the free HTTP Shortcuts app). "Chilli: screenshot"
+   = POST, same header, Parameters (form-data) with a Single File parameter `image`, used from Share on
+   the screenshot preview. "Chilli: link" = Custom Text body, Content Type application/json, body =
+   variable chilli_body, built by a Run-before-execution script from the shared-text variable
+   chilli_shared: setVariable('chilli_body', JSON.stringify({ url: getVariable('chilli_shared') })).
 9. AI app: claude.ai → Settings → Connectors → Add custom connector: name Chilli, URL
    https://<domain>/mcp, no sign-in (no OAuth), custom header Authorization = "Bearer <MCP secret>".
    Claude Code: `claude mcp add --transport http chilli https://<domain>/mcp --header "Authorization: Bearer <MCP secret>"`.

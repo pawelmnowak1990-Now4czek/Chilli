@@ -1,7 +1,7 @@
 # Browser extension
 
 A small extension (Manifest V3, plain JavaScript, no build step) for Chrome and other Chromium
-browsers: Edge, Brave, Arc, Dia, Vivaldi. It sends the same captures as the iPhone Shortcuts and shows
+browsers: Edge, Brave, Arc, Dia, Vivaldi. It sends the same captures as the phone shortcuts (iPhone or Android) and shows
 what you already saved about the page you are on.
 
 ## Install
