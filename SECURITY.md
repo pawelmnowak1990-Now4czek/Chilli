@@ -33,5 +33,5 @@ and denial of service from a client that holds a valid token.
 - Keep `MCP_SECRET_IN_URL=false`, so the MCP secret travels in a header and never in a URL.
 - The database port is not published by docker compose; keep it that way.
 - If a token leaks, replace it in `.env` (`openssl rand -hex 32`), run `docker compose up -d` and update
-  the Shortcuts, the extension and the MCP clients.
+  the phone shortcuts, the extension and the MCP clients.
 - Update regularly: `git pull && docker compose up -d --build`.

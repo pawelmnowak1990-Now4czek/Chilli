@@ -1,6 +1,6 @@
 """POST /capture: accepts a screenshot or a link and answers right away.
 
-Three request shapes under one address (iOS Shortcuts: shortcuts/README.md, Chrome extension: extension/):
+Three request shapes under one address (phone shortcuts: shortcuts/README.md, Chrome extension: extension/):
 - multipart form with an `image` field (image file)  -> source_type = 'screenshot'
 - JSON `{"url": "https://..."}`                      -> source_type = 'link'
 - JSON `{"text": "...", "url": ..., "title": ...}`   -> source_type = 'text' (selected fragment of a page)

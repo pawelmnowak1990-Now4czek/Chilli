@@ -19,7 +19,7 @@ labels: bug
 - Chilli version or commit:
 - Web server: Caddy / nginx / none
 - Model provider and model (`LLM_PROVIDER`, `LLM_MODEL`):
-- Client: iPhone Shortcut / browser extension (which browser) / MCP client (which)
+- Client: iPhone Shortcut / Android (HTTP Shortcuts) / browser extension (which browser) / MCP client (which)
 
 **Output of `docker compose exec api python -m app.doctor --no-llm`**
 

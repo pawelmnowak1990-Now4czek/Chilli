@@ -13,14 +13,14 @@ describes them, and your assistant finds them over MCP.
 
 > **New to servers? You do not need to be technical.**
 > [Step-by-step install guide](docs/guides/beginners.md): rent a small server, point a domain at it,
-> run one installer, add the iPhone button and connect your AI app, in about an hour.
+> run one installer, add the phone button (iPhone or Android) and connect your AI app, in about an hour.
 > Or [let an AI assistant guide you](docs/guides/install-with-ai.md): paste one prompt into Claude,
 > ChatGPT or Gemini and it walks you through every step.
 
 ## Why Chilli
 
-- **One-button capture.** The iPhone Action Button saves a screenshot; the share sheet saves a link;
-  a browser extension saves pages, selections and tab screenshots. No folders, tags or titles.
+- **One-button capture.** Works with any phone. On iPhone the Action Button saves a screenshot; on
+  Android you share it from the screenshot preview; the share sheet saves a link on both. A browser extension saves pages, selections and tab screenshots. No folders, tags or titles.
 - **A remote MCP server.** Add it as a custom connector in claude.ai and your saves are there in every
   chat and in scheduled tasks, not only on one computer.
 - **Ratings per project.** Describe your projects once; every save gets a 1-10 usefulness score for each.
@@ -38,7 +38,7 @@ describes them, and your assistant finds them over MCP.
 1. `git clone https://github.com/pawelmnowak1990-Now4czek/chilli.git && cd chilli`
 2. `./setup.sh` asks for your domain, model and key, writes `.env`, starts the containers and prints
    your capture token and MCP address.
-3. Add the [iPhone Shortcut](docs/guides/ios-shortcuts.md) and the [connector in your AI client](docs/guides/mcp-clients.md).
+3. Add the [iPhone Shortcut](docs/guides/ios-shortcuts.md) or the [Android share shortcuts](docs/guides/android.md), and the [connector in your AI client](docs/guides/mcp-clients.md).
 4. Optional: the [browser extension](docs/guides/browser-extension.md) for Chrome, Edge, Brave, Arc and
    Dia (download the zip from the latest release).
 
@@ -70,7 +70,7 @@ License: MIT, see [LICENSE](LICENSE).
 
 ## Features
 
-- Screenshots (iPhone Action Button or Back Tap), links (share sheet), selected text, page and tab
+- Screenshots (iPhone Action Button or Back Tap, Android share sheet), links (share sheet on iPhone and Android), selected text, page and tab
   screenshots (browser extension).
 - Full text: screenshots are transcribed, linked pages are fetched (articles via trafilatura, posts on X via
   a public API), so search works on the content, not only the title.
@@ -97,7 +97,7 @@ License: MIT, see [LICENSE](LICENSE).
 ## How it works
 
 ```
-iPhone Shortcut / browser extension
+iPhone Shortcut / Android share / browser extension
         |  HTTPS, Authorization: Bearer <CAPTURE_TOKEN>
         v
    POST /capture  --->  answers at once, processing runs in the background:
@@ -109,7 +109,7 @@ iPhone Shortcut / browser extension
 AI clients: claude.ai, Claude Code, Cursor, ...   tools: search_saves, top_saves, from_archive, report_gap, ...
 ```
 
-One service and one database in Docker Compose. The phone holds no logic: the Shortcuts only send
+One service and one database in Docker Compose. The phone holds no logic: the shortcuts (iPhone or Android) only send
 the screenshot or the link.
 
 ## Model providers
@@ -135,6 +135,7 @@ Reports of what works are welcome. Details: [docs/guides/configuration.md](docs/
 - [Install, update, back up](docs/guides/install.md)
 - [Configuration: every `.env` variable](docs/guides/configuration.md)
 - [iPhone Shortcuts](docs/guides/ios-shortcuts.md)
+- [Android (HTTP Shortcuts)](docs/guides/android.md)
 - [Browser extension](docs/guides/browser-extension.md)
 - [AI clients over MCP](docs/guides/mcp-clients.md)
 - [Daily and weekly digests](docs/guides/digests.md)

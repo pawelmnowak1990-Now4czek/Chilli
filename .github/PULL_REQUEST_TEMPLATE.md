@@ -11,4 +11,4 @@
 
 ## What could not be tested
 
-<!-- e.g. a real model provider, a real iPhone, HTTPS on a server -->
+<!-- e.g. a real model provider, a real iPhone or Android phone, HTTPS on a server -->

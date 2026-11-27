@@ -1,0 +1,3 @@
+# Findings checked by hand and known not to be secrets (gitleaks fingerprints: commit:file:rule:line).
+# A placeholder "Bearer YOUR_CAPTURE_TOKEN" in a curl example, replaced by $TOKEN in the next commit.
+80f389069c9126c4b8d7eb75486115112afe6b9c:docs/guides/android.md:curl-auth-header:25

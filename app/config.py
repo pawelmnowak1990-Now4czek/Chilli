@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Database connection; set automatically in docker compose.
     database_url: str = ""
 
-    # Token the iOS Shortcut sends in a header with every capture.
+    # Token the phone shortcut (iPhone or Android) sends in a header with every capture.
     capture_token: str = ""
 
     # MCP server secret. The client sends it in the `Authorization: Bearer <secret>` header on /mcp.

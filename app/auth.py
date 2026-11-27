@@ -1,4 +1,4 @@
-"""Checks the token that the iOS Shortcut sends in the `Authorization: Bearer <token>` header."""
+"""Checks the token that the phone shortcut (iPhone or Android) sends in the `Authorization: Bearer <token>` header."""
 
 import hmac
 

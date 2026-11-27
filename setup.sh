@@ -287,7 +287,7 @@ BASE="${PUBLIC_URL:-http://localhost:$CHILLI_PORT}"
 echo
 echo "Done. Keep these values; they are shown only now (and stored in .env):"
 echo
-echo "  Capture URL (iOS Shortcuts, browser extension): $BASE/capture"
+echo "  Capture URL (phone shortcuts, browser extension): $BASE/capture"
 echo "  Capture token (header Authorization: Bearer ...): $CAPTURE_TOKEN"
 echo
 echo "  MCP server URL (Claude, ChatGPT, Cursor...): $BASE/mcp"
@@ -295,7 +295,7 @@ echo "  MCP header: Authorization: Bearer $MCP_SECRET"
 echo "  In claude.ai: Settings > Connectors > Add custom connector, the URL above, authentication \"No sign-in\","
 echo "  and the header above as a custom header (with OAuth chosen, Authorization is reserved)."
 echo
-echo "Next: shortcuts/README.md for the iPhone, extension/ for the browser."
+echo "Next: shortcuts/README.md for the phone (iPhone or Android), extension/ for the browser."
 if [ "$LLM_PROVIDER" = "openai" ] && [ "${LLM_BASE_URL#*host.docker.internal}" != "$LLM_BASE_URL" ]; then
     echo "Note: on Linux, host.docker.internal needs extra_hosts on the api service (docs/dev/17-llm-provider.md)."
 fi

@@ -16,13 +16,14 @@ This file is the guide for contributors and coding agents. User documentation: R
 ## Architecture
 
 ```
-iPhone Shortcut / browser extension --HTTPS--> POST /capture --> background processing --> Postgres (saves)
+phone (iPhone Shortcut, Android HTTP Shortcuts) / browser extension --HTTPS--> POST /capture --> background processing --> Postgres (saves)
                                                                   |  model (app/llm/): title, summary, kind, tags, text
                                                                   |  local model: embedding
 AI clients (claude.ai, Claude Code, Cursor...) <--MCP--> /mcp  (app/mcp_server.py tools)
 ```
 
-- The phone holds no logic: two Shortcuts (Action Button screenshot, share-sheet link) only post data.
+- The phone holds no logic: iPhone Shortcuts (Action Button screenshot, share-sheet link) or Android
+  HTTP Shortcuts (share sheet) only post data.
 - `/capture` answers at once (202 with `{"id", "status": "accepted"}`); processing runs in the background.
 - One service in one container next to the database (docker compose); optional Caddy in `docker-compose.caddy.yml`.
 - The model provider is pluggable (`app/llm/`: `anthropic`, or any OpenAI-compatible API) and chosen in `.env`.
@@ -58,7 +59,7 @@ The code is read by people who know SQL well and are less at home in Python:
 app/          FastAPI service (app/llm/ model providers, app/doctor.py installation check)
 db/           database schema
 extension/    browser extension (Manifest V3, no build step)
-shortcuts/    pointer to the iOS Shortcuts guide
+shortcuts/    pointer to the iPhone and Android guides
 deploy/       nginx template, Caddyfile, backup script
 docs/guides/  user documentation
 docs/dev/     build log and developer notes
@@ -73,4 +74,4 @@ setup.sh      interactive installer
 - Untouchable: `.env` (never read or write it), the `db` service and volumes in `docker-compose.yml`,
   existing columns of every table (schema changes are additive only), the stored `status` and `kind` values.
 - Outside the loop: anything on a server (web server, certificates, DNS, swap), pushes, releases,
-  live tests from an iPhone.
+  live tests from a phone.
