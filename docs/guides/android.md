@@ -22,8 +22,9 @@ server: `grep '^CAPTURE_TOKEN=' .env`). Replace `chilli.example.com` with your d
 This rules out server problems before you touch the phone:
 
 ```bash
+read -rs TOKEN   # paste the capture token, then Enter (it is not shown)
 curl -s -X POST https://chilli.example.com/capture \
-  -H "Authorization: Bearer YOUR_CAPTURE_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.org"}'
 ```
