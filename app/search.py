@@ -14,7 +14,12 @@ from psycopg.rows import dict_row
 STATUSES = ("nowy", "przejrzany", "wykorzystany", "archiwum")
 
 # Columns returned in result lists (without the long content_text, so we do not flood the conversation).
-LIST_COLUMNS = "s.id, s.created_at, s.source_type, s.title, s.summary, s.kind, s.tags, s.source_app, s.url, s.status"
+# own_project: the project whose own site the save comes from (db/schema.sql, app/own_sites.py),
+# NULL for an ordinary find. Every list shows it, so an assistant can tell the owner's own pages apart.
+LIST_COLUMNS = (
+    "s.id, s.created_at, s.source_type, s.title, s.summary, s.kind, s.tags, s.source_app, s.url, s.status, "
+    "own_project(s.url) AS own_project"
+)
 
 # The same expression as in the saves_fts_idx index (db/schema.sql). It must be identical,
 # otherwise Postgres will not use the GIN index.

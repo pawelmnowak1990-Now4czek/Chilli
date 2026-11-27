@@ -33,7 +33,9 @@ something {owner} may have saved earlier. When a save turned out to be useful, m
 
 Every save is rated 1-10 for {owner}'s projects (list: list_projects). \
 The most useful saves, overall or for one project, come from top_saves. \
-When {owner} talks about a new project or finishes an old one, update the list with upsert_project.
+When {owner} talks about a new project or finishes an old one, update the list with upsert_project. \
+Pages {owner} publishes for a project (its website, changelog, repository) go in that project's own_sites: \
+saves from them carry own_project, are {owner}'s own content rather than finds, and stay out of the best lists.
 
 Recall: from_archive gives forgotten but useful saves from 2-8 weeks ago; \
 remind_save sets a reminder about a save ("remind me in a week"), due_reminders shows the overdue ones.
@@ -118,7 +120,7 @@ async def set_status(save_id: str, status: str, note: str | None = None) -> dict
 @server.tool()
 async def list_projects(only_active: bool = False) -> list[dict[str, Any]]:
     """The owner's projects that saves are rated against: name, description, whether active,
-    how many saves match it."""
+    own sites (pages the owner publishes for the project), how many saves match it."""
 
     def run() -> list[dict[str, Any]]:
         with db.connect() as conn:
@@ -128,27 +130,33 @@ async def list_projects(only_active: bool = False) -> list[dict[str, Any]]:
 
 
 @server.tool()
-async def upsert_project(name: str, description: str | None = None, active: bool | None = None) -> dict[str, Any]:
+async def upsert_project(
+    name: str, description: str | None = None, active: bool | None = None, own_sites: list[str] | None = None
+) -> dict[str, Any]:
     """Adds a project or changes the existing one with the same name.
 
     name: project name.
     description: 1-2 sentences on what the project is about; the model rates saves against this description.
     active: false = project finished: new saves are not rated for it, and top_saves without a project
         skips it. Its old ratings are visible through top_saves(project=...) until re-rating (rerate --all).
+    own_sites: pages the owner publishes for this project, e.g. ["example.com", "github.com/owner/repo"]
+        (a domain covers its subdomains, a path covers everything below it). Saves and RSS entries from
+        them are the owner's own content: marked with own_project and left out of top_saves,
+        from_archive and feed_highlights. Replaces the whole list; [] clears it.
     Omitted fields stay unchanged. A new project covers saves from now on; older ones are re-rated
     by the owner on the server (python -m app.rerate).
     """
 
     def run() -> dict[str, Any]:
         with db.connect() as conn:
-            return projects.upsert_project(conn, name, description, active)
+            return projects.upsert_project(conn, name, description, active, own_sites)
 
     return await anyio.to_thread.run_sync(run)
 
 
 @server.tool()
 async def top_saves(
-    project: str | None = None, days: int | None = None, min_score: int = 1, limit: int = 20
+    project: str | None = None, days: int | None = None, min_score: int = 1, limit: int = 20, include_own: bool = False
 ) -> list[dict[str, Any]]:
     """The most useful saves, highest 1-10 score first.
 
@@ -157,11 +165,15 @@ async def top_saves(
     days: only saves from the last days.
     min_score: lowest score in the result (e.g. 7 = only clearly useful).
     limit: how many results (default 20, max 100). Saves with status archiwum are skipped.
+    include_own: also return saves from the owner's own sites (own_project set); skipped by default,
+        because the owner's own pages are not finds.
     """
 
     def run() -> list[dict[str, Any]]:
         with db.connect() as conn:
-            return projects.top_saves(conn, project=project, days=days, min_score=min_score, limit=min(limit, 100))
+            return projects.top_saves(
+                conn, project=project, days=days, min_score=min_score, limit=min(limit, 100), include_own=include_own
+            )
 
     return await anyio.to_thread.run_sync(run)
 
@@ -248,7 +260,7 @@ async def set_feed_active(url: str, active: bool) -> dict[str, Any]:
 async def feed_highlights(days: int = 1, min_score: int = 7, limit: int = 10) -> list[dict[str, Any]]:
     """RSS feed entries with a score of at least min_score that appeared in the last `days` days
     and have not been saved yet. Each has an id (for save_feed_entry), feed, title, URL, description
-    and project ratings."""
+    and project ratings. Entries from the owner's own sites (upsert_project own_sites) are skipped."""
 
     def run() -> list[dict[str, Any]]:
         with db.connect() as conn:

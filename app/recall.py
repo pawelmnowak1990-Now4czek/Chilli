@@ -1,7 +1,8 @@
 """Bringing saves back at the right moment: the "From the archive" section and reminders.
 
 - "From the archive": 1-2 older saves (from 2-8 weeks ago) that are concretely useful (rating 7+ in an
-  active project) and still have the status `nowy`, i.e. saved and forgotten. The daily summary
+  active project) and still have the status `nowy`, i.e. saved and forgotten. Saves from the owner's
+  own sites (app/own_sites.py) never come back here. The daily summary
   gets them through the MCP tool from_archive.
 - Reminders: the owner asks "remind me in N days", and the summary shows saves whose date has
   passed (due_reminders), until the status changes.
@@ -65,6 +66,7 @@ def from_archive(conn: psycopg.Connection, limit: int = 2, today: date | None = 
         FROM scored JOIN saves s ON s.id = scored.save_id
         WHERE s.status = 'nowy'
           AND s.duplicate_of IS NULL
+          AND own_project(s.url) IS NULL  -- the owner's own pages are not forgotten finds
           AND scored.best_score >= %(min_score)s
           AND (s.created_at AT TIME ZONE %(tz)s)::date
               BETWEEN %(today)s::date - %(max_days)s AND %(today)s::date - %(min_days)s

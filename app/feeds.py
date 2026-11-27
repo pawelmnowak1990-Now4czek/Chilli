@@ -224,21 +224,27 @@ def set_active(conn: psycopg.Connection, url: str, active: bool) -> dict[str, An
 
 
 def highlights(
-    conn: psycopg.Connection, days: int = 1, min_score: int = HIGHLIGHT_MIN_SCORE, limit: int = 10
+    conn: psycopg.Connection,
+    days: int = 1,
+    min_score: int = HIGHLIGHT_MIN_SCORE,
+    limit: int = 10,
+    include_own: bool = False,
 ) -> list[dict[str, Any]]:
     """Highly rated entries that Chilli saw in the last `days` days and that the owner has not
-    saved yet. Highest rating first."""
+    saved yet. Highest rating first. Entries from the owner's own sites (app/own_sites.py), such as
+    the changelog of their own product, are skipped unless `include_own`: they are not news to the owner."""
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """SELECT e.id, f.title AS feed, e.title, e.url, e.summary, e.published_at,
-                      e.best_score, e.ratings
+                      e.best_score, e.ratings, own_project(e.url) AS own_project
                FROM feed_entries e JOIN feeds f ON f.id = e.feed_id
                WHERE e.save_id IS NULL
                  AND e.best_score >= %(min_score)s
                  AND e.created_at >= now() - make_interval(days => %(days)s)
+                 AND (%(include_own)s OR own_project(e.url) IS NULL)
                ORDER BY e.best_score DESC, e.published_at DESC NULLS LAST
                LIMIT %(limit)s""",
-            {"min_score": min_score, "days": days, "limit": limit},
+            {"min_score": min_score, "days": days, "limit": limit, "include_own": include_own},
         )
         return [_jsonable(row) for row in cur.fetchall()]
 

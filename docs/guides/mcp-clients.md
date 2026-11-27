@@ -71,7 +71,7 @@ Read only:
 | `search_saves(query, limit, status)` | Search by content and meaning (full-text and semantic at once), in any language. |
 | `get_save(save_id)` | One save in full: text, URL, status, note and ratings for each project. |
 | `list_recent(days, status, limit)` | Saves from the last days, newest first. |
-| `list_projects(only_active)` | Your projects that saves are rated against, with how many saves fit each. |
+| `list_projects(only_active)` | Your projects that saves are rated against, with their own sites and how many saves fit each. |
 | `top_saves(project, days, min_score, limit)` | The most useful saves by 1-10 score, overall or for one project. |
 | `from_archive(limit)` | Forgotten but useful saves from 2-8 weeks ago (score 7+, still `nowy`). |
 | `due_reminders(limit)` | Saves whose reminder date has come. |
@@ -84,7 +84,7 @@ Change something:
 | Tool | What it does |
 | --- | --- |
 | `set_status(save_id, status, note)` | Set the status (`nowy` new, `przejrzany` reviewed, `wykorzystany` used, `archiwum` archive) and an optional note. |
-| `upsert_project(name, description, active)` | Add or change a project; the description is what saves are rated against. |
+| `upsert_project(name, description, active, own_sites)` | Add or change a project; the description is what saves are rated against. `own_sites` lists pages you publish for it (`example.com`, `github.com/you/repo`): saves and feed entries from them are marked `own_project` and kept out of `top_saves`, `from_archive` and `feed_highlights`. |
 | `remind_save(save_id, days)` | Remind about a save in N days (0 clears it). |
 | `add_feed(url)` | Subscribe to an RSS/Atom feed; its entries get rated against your projects. |
 | `set_feed_active(url, active)` | Pause or resume a feed. |

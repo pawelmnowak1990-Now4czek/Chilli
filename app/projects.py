@@ -9,6 +9,7 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import dict_row
 
+from app.own_sites import normalize_sites
 from app.relevance import Project, Rating
 from app.search import LIST_COLUMNS, _jsonable
 
@@ -17,7 +18,7 @@ def list_projects(conn: psycopg.Connection, only_active: bool = False) -> list[d
     """All projects (or only active ones) with the number of saves that match them."""
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
-            """SELECT p.id, p.name, p.description, p.active,
+            """SELECT p.id, p.name, p.description, p.active, p.own_sites,
                       count(sp.save_id) AS saves_count
                FROM projects p
                LEFT JOIN save_projects sp ON sp.project_id = p.id
@@ -36,32 +37,40 @@ def active_projects(conn: psycopg.Connection) -> list[Project]:
 
 
 def upsert_project(
-    conn: psycopg.Connection, name: str, description: str | None = None, active: bool | None = None
+    conn: psycopg.Connection,
+    name: str,
+    description: str | None = None,
+    active: bool | None = None,
+    own_sites: list[str] | None = None,
 ) -> dict[str, Any]:
     """Adds a project or changes an existing one with the same name (case does not matter).
 
-    Fields passed as None stay unchanged (for a new project: empty description, active).
+    Fields passed as None stay unchanged (for a new project: empty description, active, no own sites).
+    `own_sites` replaces the whole list (app/own_sites.py); an empty list clears it.
     """
     name = name.strip()
     if not name:
         raise ValueError("project name cannot be empty")
+    sites = None if own_sites is None else normalize_sites(own_sites)
     existing = conn.execute("SELECT id FROM projects WHERE lower(name) = lower(%s)", (name,)).fetchone()
     with conn.cursor(row_factory=dict_row) as cur:
         if existing is None:
             cur.execute(
-                """INSERT INTO projects (name, description, active) VALUES (%s, %s, %s)
-                   RETURNING id, name, description, active""",
-                (name, description or "", True if active is None else active),
+                """INSERT INTO projects (name, description, active, own_sites) VALUES (%s, %s, %s, %s)
+                   RETURNING id, name, description, active, own_sites""",
+                (name, description or "", True if active is None else active, sites or []),
             )
         else:
+            # coalesce(new, old): a NULL parameter (field not given) keeps the stored value.
             cur.execute(
                 """UPDATE projects SET
                        name = %s,
                        description = coalesce(%s, description),
-                       active = coalesce(%s, active)
+                       active = coalesce(%s, active),
+                       own_sites = coalesce(%s, own_sites)
                    WHERE id = %s
-                   RETURNING id, name, description, active""",
-                (name, description, active, existing[0]),
+                   RETURNING id, name, description, active, own_sites""",
+                (name, description, active, sites, existing[0]),
             )
         row = cur.fetchone()
     assert row is not None
@@ -100,6 +109,7 @@ def top_saves(
     min_score: int = 1,
     limit: int = 20,
     include_archived: bool = False,
+    include_own: bool = False,
 ) -> list[dict[str, Any]]:
     """Most useful saves, highest rating first.
 
@@ -107,6 +117,7 @@ def top_saves(
     not boost saves). With `project`: the rating for that project, even a finished one.
     `days`: only saves from the last days. Archived saves and hidden duplicates are skipped.
     `projects` in the result are all matching projects of the save, so the wider context is visible.
+    Saves from the owner's own sites (own_project) are skipped unless `include_own`: they are not finds.
     """
     if project is not None and conn.execute(
         "SELECT 1 FROM projects WHERE lower(name) = lower(%s)", (project,)
@@ -130,12 +141,13 @@ def top_saves(
           AND scored.best_score >= %(min_score)s
           AND (%(days)s::int IS NULL OR s.created_at >= now() - make_interval(days => %(days)s))
           AND (%(include_archived)s OR s.status <> 'archiwum')
+          AND (%(include_own)s OR own_project(s.url) IS NULL)
         ORDER BY scored.best_score DESC, s.created_at DESC
         LIMIT %(limit)s
     """
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, {
             "project": project, "days": days, "min_score": min_score,
-            "limit": limit, "include_archived": include_archived,
+            "limit": limit, "include_archived": include_archived, "include_own": include_own,
         })
         return [_jsonable(row) for row in cur.fetchall()]

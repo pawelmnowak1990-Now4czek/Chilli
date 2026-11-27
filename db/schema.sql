@@ -184,3 +184,45 @@ CREATE TABLE IF NOT EXISTS knowledge_gaps (
     closed_at       timestamptz
 );
 CREATE INDEX IF NOT EXISTS knowledge_gaps_status_idx ON knowledge_gaps (status, created_at DESC);
+
+-- Own sites: pages the owner publishes themselves (a product's website, changelog, blog, own repository).
+-- A save or an RSS entry from such a page is the owner's own content, not a find: it stays searchable,
+-- but it is marked (own_project) and left out of top_saves, from_archive and feed_highlights.
+-- Each entry is a domain ('example.com', subdomains included) or a domain with a path prefix
+-- ('github.com/owner'), stored normalised by app/own_sites.py: lowercase, no scheme, no 'www.'.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS own_sites text[] NOT NULL DEFAULT '{}';
+
+-- 'https://www.Example.com:8080/Blog/post?x=1#top' -> 'example.com/blog/post'; NULL when it is not a URL.
+-- CREATE OR REPLACE keeps it safe to run on every start, like the rest of this file.
+CREATE OR REPLACE FUNCTION url_site(url text) RETURNS text
+LANGUAGE sql IMMUTABLE AS $$
+    SELECT regexp_replace(
+               lower(substring(url FROM '^[a-zA-Z][a-zA-Z0-9+.-]*://(?:[^/?#@]*@)?([^/?#:]+)')),
+               '^www\.', '')
+           || lower(coalesce(substring(url FROM '^[a-zA-Z][a-zA-Z0-9+.-]*://[^/?#]*(/[^?#]*)'), ''))
+$$;
+
+-- The name of the project whose own sites contain the URL, or NULL when the URL is nobody's own.
+-- An entry matches its domain and every subdomain ('example.com' covers 'blog.example.com'),
+-- and when it has a path, that path and everything below it ('github.com/owner' covers
+-- 'github.com/owner/repo' but not 'github.com/owner2'). Inactive projects count too: a finished
+-- project's website is still the owner's own.
+CREATE OR REPLACE FUNCTION own_project(url text) RETURNS text
+LANGUAGE sql STABLE AS $$
+    WITH site AS (
+        SELECT split_part(url_site(url), '/', 1) AS host,
+               substring(url_site(url) FROM '/.*$') AS path
+    )
+    SELECT p.name
+    FROM projects p
+    CROSS JOIN LATERAL unnest(p.own_sites) AS own(entry)
+    CROSS JOIN site
+    WHERE (site.host = split_part(own.entry, '/', 1)
+           OR right(site.host, length(split_part(own.entry, '/', 1)) + 1) = '.' || split_part(own.entry, '/', 1))
+      AND (position('/' IN own.entry) = 0
+           OR coalesce(site.path, '') = substring(own.entry FROM '/.*$')
+           OR left(coalesce(site.path, ''), length(substring(own.entry FROM '/.*$')) + 1)
+              = substring(own.entry FROM '/.*$') || '/')
+    ORDER BY p.name
+    LIMIT 1
+$$;

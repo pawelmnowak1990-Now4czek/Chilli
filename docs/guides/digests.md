@@ -35,7 +35,9 @@ Steps:
 Write the message with these parts:
 - "Top picks": saves rated 7+. For each: title, score and project, one sentence on what to do with it,
   and the link if there is one.
-- "The rest": one line per other new save. Mark saves without a rating as "unrated".
+- "The rest": one line per other new save. Mark saves without a rating as "unrated". A save with
+  own_project set comes from my own site (my product page, changelog, repository): mark it
+  "own (<project>)" instead of a score, and never put it in "Top picks".
 - "Reminders": saves from due_reminders, one line each.
 - "From the archive": the saves from from_archive, one line each with why it may be useful now.
 - "From RSS feeds": entries from feed_highlights, one line each with the feed, the score and the
