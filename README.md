@@ -153,7 +153,7 @@ The tests start a temporary Postgres 16 with pgvector through the `pgserver` pac
 
 ## Author
 
-Created by [Paweł Nowak](https://github.com/pawelmnowak1990-Now4czek).
+Created by [Paweł Nowak](https://github.com/pawelmnowak1990-Now4czek) ([@Nowak1990P](https://x.com/Nowak1990P) on X).
 
 ## License
 
