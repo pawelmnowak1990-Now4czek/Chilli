@@ -151,6 +151,10 @@ uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev
 
 The tests start a temporary Postgres 16 with pgvector through the `pgserver` package, so they need no Docker.
 
+## Author
+
+Created by [Paweł Nowak](https://github.com/pawelmnowak1990-Now4czek).
+
 ## License
 
 MIT, see [LICENSE](LICENSE).
