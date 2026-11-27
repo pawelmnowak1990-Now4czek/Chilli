@@ -21,7 +21,7 @@ The options page opens on first install (later: right-click the icon → Options
 ## Options
 
 - **Server address**: your `PUBLIC_URL`, e.g. `https://chilli.example.com`.
-- **Token**: the `CAPTURE_TOKEN` (the same as in the Shortcuts). It stays in this browser only
+- **Token**: the `CAPTURE_TOKEN` (the same as in the phone shortcuts). It stays in this browser only
   (`chrome.storage.local`, not synced).
 - **Show what I already have**: on by default; see below.
 

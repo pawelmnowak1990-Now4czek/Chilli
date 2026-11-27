@@ -5,14 +5,14 @@ commented template. After a change: `docker compose up -d` (it recreates the api
 
 Write the names in capitals as below. **Secret** marks values that give access: keep them out of chats,
 screenshots and repositories. To replace a leaked token, generate a new one (`openssl rand -hex 32`),
-put it in `.env`, run `docker compose up -d` and update the Shortcuts, the extension or the MCP client.
+put it in `.env`, run `docker compose up -d` and update the phone shortcuts, the extension or the MCP client.
 
 ## Server and access
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `PUBLIC_URL` | empty | Public address, e.g. `https://chilli.example.com`, no trailing slash. The MCP server only accepts requests for this host (protection against DNS rebinding); empty = local requests only. Also shown in the User-Agent when fetching pages. |
-| `CAPTURE_TOKEN` | empty | **Secret.** Token the Shortcuts and the extension send as `Authorization: Bearer <token>`. Empty = `/capture` refuses everything. |
+| `CAPTURE_TOKEN` | empty | **Secret.** Token the phone shortcuts (iPhone or Android) and the extension send as `Authorization: Bearer <token>`. Empty = `/capture` refuses everything. |
 | `MCP_SECRET` | empty | **Secret.** Token AI clients send to `/mcp` as `Authorization: Bearer <secret>`. Empty = no MCP server. |
 | `MCP_SECRET_IN_URL` | `true` | Whether the older address `/mcp/<secret>` also works. setup.sh sets `false`; keep it `false` unless a client cannot send headers. |
 | `CHILLI_PORT` | `8000` | Local port the api listens on (`127.0.0.1` only), used by docker compose and the nginx site. Change it only to run a second Chilli on the same server. Caddy does not use it. |

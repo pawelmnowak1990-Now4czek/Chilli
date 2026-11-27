@@ -156,7 +156,7 @@ short text with `"status":"ok"`. A padlock in the address bar means HTTPS works.
 
 ## Step 8. The phone button
 
-Follow [ios-shortcuts.md](ios-shortcuts.md). In short, you build two Shortcuts in the Shortcuts app
+**iPhone:** follow [ios-shortcuts.md](ios-shortcuts.md). In short, you build two Shortcuts in the Shortcuts app
 (about five minutes), paste the capture URL and the token into them, and put the first one on the
 Action Button (or on Back Tap: double-tap the back of the phone).
 
@@ -191,7 +191,7 @@ screenshot of the tab with one click, and shows what you already saved about the
 Download the zip from the latest
 [release](https://github.com/pawelmnowak1990-Now4czek/chilli/releases/latest) and follow
 [browser-extension.md](browser-extension.md); it needs the same server address and capture token as
-the iPhone. Safari is not supported yet.
+the phone. Safari is not supported yet.
 
 ## Step 10. Backups (recommended)
 

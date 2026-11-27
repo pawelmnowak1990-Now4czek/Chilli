@@ -1,4 +1,4 @@
-# iOS Shortcuts
+# Phone shortcuts (iPhone and Android)
 
 The step-by-step guide for both Shortcuts (Action Button screenshot and share-sheet link) is in
 [docs/guides/ios-shortcuts.md](../docs/guides/ios-shortcuts.md).

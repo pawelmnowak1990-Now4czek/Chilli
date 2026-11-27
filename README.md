@@ -19,8 +19,8 @@ describes them, and your assistant finds them over MCP.
 
 ## Why Chilli
 
-- **One-button capture.** The iPhone Action Button saves a screenshot; the share sheet saves a link
-  (on Android too, through the share sheet); a browser extension saves pages, selections and tab screenshots. No folders, tags or titles.
+- **One-button capture.** Works with any phone. On iPhone the Action Button saves a screenshot; on
+  Android you share it from the screenshot preview; the share sheet saves a link on both. A browser extension saves pages, selections and tab screenshots. No folders, tags or titles.
 - **A remote MCP server.** Add it as a custom connector in claude.ai and your saves are there in every
   chat and in scheduled tasks, not only on one computer.
 - **Ratings per project.** Describe your projects once; every save gets a 1-10 usefulness score for each.
@@ -109,7 +109,7 @@ iPhone Shortcut / Android share / browser extension
 AI clients: claude.ai, Claude Code, Cursor, ...   tools: search_saves, top_saves, from_archive, report_gap, ...
 ```
 
-One service and one database in Docker Compose. The phone holds no logic: the Shortcuts only send
+One service and one database in Docker Compose. The phone holds no logic: the shortcuts (iPhone or Android) only send
 the screenshot or the link.
 
 ## Model providers

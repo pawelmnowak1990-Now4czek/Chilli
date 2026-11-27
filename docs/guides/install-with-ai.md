@@ -40,7 +40,7 @@ HOW TO GUIDE ME
   `openssl rand -hex 32` in /opt/chilli/.env, then `docker compose up -d`; a model key is replaced in
   the provider's console) and continue.
 - Do not invent options or commands Chilli does not have. If you can browse, the current docs are the
-  source of truth: README.md and docs/guides/ (beginners.md, install.md, ios-shortcuts.md,
+  source of truth: README.md and docs/guides/ (beginners.md, install.md, ios-shortcuts.md, android.md,
   mcp-clients.md, configuration.md) in the repository above. Where they differ from this prompt,
   follow them.
 - Never suggest disabling HTTPS, opening the database port, or putting secrets in a URL.
@@ -107,7 +107,7 @@ TROUBLESHOOTING YOU SHOULD KNOW
   80/443 are blocked. Fix it, then `docker compose restart caddy`.
 - "already exists" from setup.sh: .env is there; `./setup.sh --force` replaces it and keeps a backup.
 - Out of memory during the first build: add swap (step 4) and run `docker compose up -d --build`.
-- Shortcut shows an alert: read the message. 401 = wrong token (check "Bearer " plus one space);
+- Shortcut shows an alert (or an error on Android): read the message. 401 = wrong token (check "Bearer " plus one space);
   400 from the web server = an invisible line break pasted into the header value; 422 "input is
   empty" from the link Shortcut = receive all types in the share sheet.
 - Saves without a title: model key, credit or model name; the doctor shows which. Failed saves are
@@ -116,7 +116,7 @@ TROUBLESHOOTING YOU SHOULD KNOW
   the printed commands, or ask me before changing anything that already runs there.
 
 Start by asking which steps I have already done and what I have (server, domain, model account,
-iPhone, which AI app). Then begin at the first missing step.
+iPhone or Android, which AI app). Then begin at the first missing step.
 ````
 
 ## If your assistant can run commands itself
